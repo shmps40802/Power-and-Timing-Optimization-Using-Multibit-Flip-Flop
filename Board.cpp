@@ -181,7 +181,7 @@ void Board::ReadFile() {
 			fin >> Str >> PinName;
 			tmp.insert(PinName);
 		}
-		Net.push_back(net(name, tmp));
+		Net[name] = tmp;
 	}
 	/*
 	BinWidth 10
@@ -276,46 +276,42 @@ Board::~Board() {
 	Input.clear();
 	Output.clear();
 }
-vector<FlipFlop> Board::Banking(vector<FlipFlop> F) {
-	vector<FlipFlop> result;
-	int sum = F.size();  // total pin
-	int index = 0;
+void Board::Banking(vector<vector<FlipFlop>> F, vector<Point> pos, vector<int> n) {
 	// slack need to be set
-	while(sum > 3) {
-		int x, y; // need to be set
-		FlipFlop f = getFlipFlop(x, y, 4);
-		string CellName = "C" + CellNumber;
-		result.push_back(f);
-		NewFlipFlop.insert(CellName);
-		vector<Point> CurPin = f.getPin();
+	for(int i = 0; i < n.size(); i++) {
+		FlipFlop f = getFlipFlop(pos[i].x, pos[i].y, n[i]);
+		string FlipFlopName = "C" + CellNumber;
 		CellNumber++;
-		sum -= 4;
-		for(int i = index; i < index + 4; i++) {
-			vector<Point> PrevPin = F[i].getPin();
-			if(NewFlipFlop.find(F[i].getInstName()) != NewFlipFlop.end()) {
-				NewFlipFlop.erase(F[i].getInstName());
+		NewFlipFlop.insert(FlipFlopName);
+		f.setCellName(FlipFlopName);
+		vector<Point> CurPin = f.getPin();
+		for(int j = 0; j < n[i]; j++) {
+			vector<Point> PrevPin = F[i][j].getPin();
+			if(NewFlipFlop.find(F[i][j].getInstName()) != NewFlipFlop.end()){
+				NewFlipFlop.erase(F[i][j].getInstName());
 			}
 			int d = 0, q = 0, c = 0;
 			for(auto &p : PrevPin) {
-				string prev = F[i].getInstName() + "/" + p.name;
+				string prev = F[i][j].getInstName() + "/" + p.name;
 				string cur;
+				// Pin mapping to Pin for 1 bit
 				if(p.type == 'D') {
 					while(CurPin[d].type != 'D') {
 						d++;
 					}
-					cur = CellName + "/" + CurPin[d].name;
+					cur = FlipFlopName + "/" + CurPin[d].name;
 				}
 				else if(p.type == 'Q') {
 					while(CurPin[q].type != 'Q') {
 						q++;
 					}
-					cur = CellName + "/" + CurPin[q].name;
+					cur = FlipFlopName + "/" + CurPin[q].name;
 				}
 				else if(p.type == 'C') {
 					while(CurPin[c].type != 'C') {
 						c++;
 					}
-					cur = CellName + "/" + CurPin[c].name;
+					cur = FlipFlopName + "/" + CurPin[c].name;
 				}
 				else {
 					cout << "not existing point\n";
@@ -333,70 +329,20 @@ vector<FlipFlop> Board::Banking(vector<FlipFlop> F) {
 				}
 			}
 		}
-		index += 4;
 	}
-	if(sum > 1) {
-		FlipFlop f = getFlipFlop(0, 0, 2);
-		string CellName = "C" + CellNumber;
-		result.push_back(f);
-		NewFlipFlop.insert(CellName);
-		vector<Point> CurPin = f.getPin();
-		CellNumber++;
-		sum -= 2;
-		for(int i = index; i < index + 2; i++) {
-			vector<Point> PrevPin = F[i].getPin();
-			int d = 0, q = 0, c = 0;
-			for(auto &p : PrevPin) {
-				string prev = F[i].getInstName() + "/" + p.name;
-				string cur;
-				if(p.type == 'D') {
-					while(CurPin[d].type != 'D') {
-						d++;
-					}
-					cur = CellName + "/" + CurPin[d].name;
-				}
-				else if(p.type == 'Q') {
-					while(CurPin[q].type != 'Q') {
-						q++;
-					}
-					cur = CellName + "/" + CurPin[q].name;
-				}
-				else if(p.type == 'C') {
-					while(CurPin[c].type != 'C') {
-						c++;
-					}
-					cur = CellName + "/" + CurPin[c].name;
-				}
-				else {
-					cout << "not existing point\n";
-					break;
-				}
-				if(CurToPrev[prev] == "") {
-					PrevToCur[prev] = cur;
-					CurToPrev[cur] = prev;
-				}
-				else {
-					string tmp = CurToPrev[prev];
-					PrevToCur[tmp] = cur;
-					CurToPrev[cur] = tmp;
-					CurToPrev.erase(prev);
-				}
-			}
-		}
-		index += 2;
-	}
-	if(sum > 0) {
+}
+vector<FlipFlop> Board::Debanking(FlipFlop F) {
+	vector<FlipFlop> result;
+	int sum = F.getN();
+	vector<Point> PrevPin = F.getPin();
+	for(int i = 0; i < sum; i++){
 		FlipFlop f = getFlipFlop(0, 0, 1);
 		string CellName = "C" + CellNumber;
-		result.push_back(f);
-		NewFlipFlop.insert(CellName);
 		vector<Point> CurPin = f.getPin();
 		CellNumber++;
-		sum -= 1;
-		vector<Point> PrevPin = F[index].getPin();
 		int d = 0, q = 0, c = 0;
-		for(auto &p : PrevPin) {
-			string prev = F[index].getInstName() + "/" + p.name;
+		for(auto &p : PrevPin){
+			string prev = F.getInstName() + "/" + p.name;
 			string cur;
 			if(p.type == 'D') {
 				while(CurPin[d].type != 'D') {
@@ -429,40 +375,6 @@ vector<FlipFlop> Board::Banking(vector<FlipFlop> F) {
 				PrevToCur[tmp] = cur;
 				CurToPrev[cur] = tmp;
 				CurToPrev.erase(prev);
-			}
-		}
-	}
-	return result;
-}
-vector<FlipFlop> Board::Debanking(FlipFlop F) {
-	vector<FlipFlop> result;
-	int sum = F.getN();
-	vector<Point> PrevPin = F.getPin();
-	for(int i = 0; i < sum; i++){
-		FlipFlop f = getFlipFlop(0, 0, 1);
-		vector<Point> CurPin = f.getPin();
-		CellNumber++;
-		int d = 0, q = 0, c = 0;
-		for(auto &p : PrevPin){
-			string prev = F.getInstName() + "/" + p.name;
-			if(p.type == 'D') {
-				while(CurPin[d].type != 'D') {
-					d++;
-				}
-			}
-			else if(p.type == 'Q') {
-				while(CurPin[q].type != 'Q') {
-					q++;
-				}
-			}
-			else if(p.type == 'C') {
-				while(CurPin[c].type != 'C') {
-					c++;
-				}
-			}
-			else {
-				cout << "not existing point\n";
-				break;
 			}
 		}
 	}
