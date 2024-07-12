@@ -3,8 +3,6 @@
 #include <fstream>
 #include <string>
 #include <algorithm>
-
-float sum;
 int Abs(int n) {
 	return n > 0 ? n : -n;
 }
@@ -182,6 +180,7 @@ void Board::ReadFile() {
 		for(int j = 0; j < n; j++) {
 			fin >> Str >> PinName;
 			tmp.insert(PinName);
+			PointToNet[PinName] = name;
 		}
 		Net[name] = tmp;
 	}
@@ -236,23 +235,22 @@ void Board::ReadFile() {
 void Board::Display() {
 	ofstream fout;
 	fout.open("output.txt");
-	for(auto &it : InstToFlipFlop){
-		fout << it.first << " " << it.second.getInstName() << " " 
-		<< it.second.getX() << " " << it.second.getY() << "\n";
+	for(auto &it : PointToNet){
+		fout << it.first << " " << it.second << "\n";
 	}
 	fout.close();
 }
-Point Board::NametoPoint(string PinName){
+Point Board::NametoPoint(string PinName) {
 	// flipflop gate pin
 	size_t pos = PinName.find('/');
-	if(pos != string::npos){
+	if(pos != string::npos) {
 		string cname = PinName.substr(0, pos);
-		for(auto &f : InstToFlipFlop){
+		for(auto &f : InstToFlipFlop) {
 			if(f.first != cname)continue;
 			string pname = PinName.substr(pos + 1, string::npos);
 			return f.second.getPoint(pname);
 		}
-		for(auto &g : InstToGate){
+		for(auto &g : InstToGate) {
 			if(g.first != cname)continue;
 			string pname = PinName.substr(pos + 1, string::npos);
 			return g.second.getPoint(pname);
@@ -260,13 +258,13 @@ Point Board::NametoPoint(string PinName){
 	}
 	// input output pin
 	else {
-		for(auto &it : Input){
-			if(it.name == PinName){
+		for(auto &it : Input) {
+			if(it.name == PinName) {
 				return it;
 			}
 		}
 		for(auto &it : Output){
-			if(it.name == PinName){
+			if(it.name == PinName) {
 				return it;
 			}
 		}
@@ -386,6 +384,7 @@ FlipFlop Board::getFlipFlop(int x, int y, int n) {
 	for(auto &it : FlipFlopLib) {
 		if(it.second.getN() == n)return it.second;
 	}
+	return FlipFlop();
 }
 bool Board::Check(int x, int y) {
 	//  not on grid point
