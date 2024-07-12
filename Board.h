@@ -45,11 +45,12 @@ private:
 	map<string, FlipFlop> InstToFlipFlop;            // inst name to FlipFlop
 	map<string, Gate> InstToGate;                    // inst name to Gate
 	map<string, set<string>> Net;                    // net connection
+	map<string, string> PointToNet;                  // point name to net name
 	map<int, list<row>> Location;                    // location of FlipFlop
 	map<pair<int, int>, vector<int>> PlacementRows;  // grid point info
 	set<string> NewFlipFlop;                         // initial FlipFlop
-	map<string, string> PrevToCur;                   // 
-	map<string, string> CurToPrev;                   //
+	map<string, string> PrevToCur;                   // previous pin to current pin
+	map<string, string> CurToPrev;                   // current pin to previous pin
 public:
     Board();
 	~Board();
@@ -65,6 +66,6 @@ public:
 	int PowerCost();
 	int AreaCost();
 	int BinCost();
-    int Cost();
+	int Cost();
 };
 #endif
