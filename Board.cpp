@@ -3,24 +3,23 @@
 #include <fstream>
 #include <string>
 #include <algorithm>
-
 int Abs(int n) {
 	return n > 0 ? n : -n;
 }
 bool ffComp(pair<string, FlipFlop> p1, pair<string, FlipFlop> p2) {
 	return p1.second.getN() > p2.second.getN();
 }
-bool rowComp(row r1, row r2){
+bool rowComp(row r1, row r2) {
 	return r1.col < r2.col;
 }
 void sort(map<string, FlipFlop>& M) { 
     vector<pair<string, FlipFlop>> A; 
-    for (auto& it : M) { 
+    for (auto& it : M) {
         A.push_back(it);
     }
     sort(A.begin(), A.end(), ffComp);
-} 
-Board::Board(){
+}
+Board::Board() {
 	Alpha = 0;
 	Beta = 0;
 	Gemma = 0;
@@ -29,8 +28,7 @@ Board::Board(){
 	LowerLeftY = 0;
 	HigherRightX = 0;
 	HigherRightY = 0;
-	NumInput = 0;
-	NumOutput = 0;
+	CellNumber = 1;
 }
 void Board::ReadFile() {
 	ifstream fin;
@@ -63,19 +61,20 @@ void Board::ReadFile() {
 	Output OUTPUT0 50 25
 	Output OUTPUT1 50 5
 	*/
+	int NumInput, NumOutput;
 	fin >> Str >> LowerLeftX >> LowerLeftY >> HigherRightX >> HigherRightY;
 	fin >> Str >> NumInput;
 	string name;
 	int x, y;
 	for (int i = 0; i < NumInput; i++) {
 		fin >> Str >> name >> x >> y;
-		Point tmp(name, x, y);
+		Point tmp(x, y, name);
 		Input.push_back(tmp);
 	}
 	fin >> Str >> NumOutput;
 	for (int i = 0; i < NumOutput; i++) {
 		fin >> Str >> name >> x >> y;
-		Point tmp(name, x, y);
+		Point tmp(x, y, name);
 		Output.push_back(tmp);
 	}
 	/*
@@ -99,7 +98,7 @@ void Board::ReadFile() {
 			vector<Point> pin;
 			for(int i = 0; i < P; i++) {
 				fin >> Str >> name >> x >> y;
-				Point tmp(name, x, y);
+				Point tmp(x, y, name);
 				if(name.substr(0,1) == "D"){
 					tmp.type = 'D';
 				}
@@ -112,44 +111,45 @@ void Board::ReadFile() {
 				pin.push_back(tmp);
 			}
 			FlipFlopLib[FlipFlopName] = FlipFlop(N, Width, Height, P, pin);
+			FlipFlopLib[FlipFlopName].setCellName(FlipFlopName);
 		}
-		else if(Str == "Gate"){
+		else if(Str == "Gate") {
 			fin >> GateName >> Width >> Height >> P;
 			vector<Point> Pin;
 			for(int i = 0; i < P; i++){
 				fin >> Str >> name >> x >> y;
-				Point tmp(name, x, y);
+				Point tmp(x, y, name);
 				Pin.push_back(tmp);
 			}
 			GateLib[GateName] = Gate(Width, Height, P, Pin);
+			GateLib[GateName].setCellName(GateName);
 		}
 		else break;
 	}
-	sort(FlipFlopLib);
+	//sort(FlipFlopLib);
 	/*
 	NumInstances 2
 	Inst C1 FF1 15 20
 	Inst C2 FF1 15 0
 	*/
-	string InstName, Name;
+	string InstName;
 	fin >> NumInst;
+	CellNumber += NumInst;
 	for (int i = 0; i < NumInst; i++) {
-		fin >> Str >> InstName >> Name >> x >> y;
-		if(FlipFlopLib.find(Name) != FlipFlopLib.end()) {
-			FlipFlop* F = new FlipFlop(FlipFlopLib[Name]);
-			F->setPos(x, y);
-			F->setName(InstName);
-			InstFlipFlop[InstName] = F;
-			Location[y].push_back(row(x, F));
-			for(auto &it : F->getPin()){
-				it.prev = InstName + "/" + it.name;
-			}
+		fin >> Str >> InstName >> name >> x >> y;
+		if(FlipFlopLib.find(name) != FlipFlopLib.end()) {
+			FlipFlop F = FlipFlopLib[name];
+			F.setPos(x, y);
+			F.setInstName(InstName);
+			InstToFlipFlop[InstName] = F;
+			Location[y].push_back(row(x, InstName));
 		}
 		else {
-			Gate* G = new Gate(GateLib[Name]);
-			G->setPos(x, y);
-			G->setName(InstName);
-			Location[y].push_back(row(x, G));
+			Gate G = GateLib[name];
+			G.setPos(x, y);
+			G.setInstName(InstName);
+			InstToGate[InstName] = G;
+			Location[y].push_back(row(x, InstName));
 		}
 	}
 	for(auto &l : Location){
@@ -217,12 +217,12 @@ void Board::ReadFile() {
 		FlipFlopLib[FlipFlopName].setQpinDelay(delay);
 	}
 	int sum = 0;
-	for (auto &it : InstFlipFlop) {
-		sum += it.second->getN();
+	for (auto &it : InstToFlipFlop) {
+		sum += it.second.getN();
 	}
 	for(int i = 0; i < sum; i++) {
 		fin >> Str >> InstName >> name >> slack;
-		InstFlipFlop[InstName]->setSlack(name, slack);
+		InstToFlipFlop[InstName].setSlack(name, slack);
 	}
 	int power;
 	for (auto &it : FlipFlopLib) {
@@ -232,78 +232,28 @@ void Board::ReadFile() {
 	fin.close();
 }
 void Board::Display() {
-	/*cout << "Alpha " << Alpha << "\nBeta " << Beta << " \nGemma " << Gemma << "\nDelta " << Delta << "\n";
-	cout << "Diesize " << LowerLeftX << " " << LowerLeftY << " " << HigherRightX << " " << HigherRightY << "\n";
-	cout << "NumInput " << NumInput << "\n";
-	for (int i = 0; i < NumInput; i++) {
-		cout << "Input " << Input[i]->name << " " << Input[i]->x << " " << Input[i]->y << "\n";
-	}
-	cout << "NumOutput" << NumOutput << "\n";
-	for (int i = 0; i < NumOutput; i++) {
-		cout << "Output " << Output[i]->name << " " << Output[i]->x << " " << Output[i]->y << "\n";
-	}
-	for (auto &it : FlipFlopLib) {
-		cout << it.first << "\n";
-		it.second->display();
-	}*/
 	ofstream fout;
 	fout.open("output.txt");
-	fout << "X = [ ";
-	for(int i = 0; i < HigherRightY; i += SiteHeight){
-		if(Location[i].empty())continue;
-		for(auto &it : Location[i]) {
-			fout << it.col << ", ";
-		}
-		fout << "];\n";
+	for(auto &it : InstToFlipFlop){
+		fout << it.first << " " << it.second.getInstName() << " " 
+		<< it.second.getX() << " " << it.second.getY() << "\n";
 	}
-	fout << "Y = [ ";
-	for(int i = 0; i < HigherRightY; i += SiteHeight){
-		if(Location[i].empty())continue;
-		fout << i << ", ";
-	}
-	fout << "];\n";
 	fout.close();
-	/*cout << "NumNets " << Net.size() << "\n";
-	for (auto &it : Net) {
-		cout << it.name << " " << it.points.size() << "\n";
-		for (auto &net : it.points) {
-			cout << "Pin " << net << "\n";
-		}
-	}
-	cout << BinWidth << "\n";
-	cout << BinHeight << "\n";
-	cout << BinMaxUtil << "\n";
-	cout << "PlacementRow " << StartX << " " << StartY << " " << RowWidth << " " << RowHeight << "\n";
-	cout << "Displacement delay " << DisplacementDelay << "\n";
-	for (auto &it : FlipFlopLib) {
-		cout << "Qpindelay " << it.second->getQpinDelay() << "\n";
-	}
-	for (auto &it : InstFlipFlop) {
-		for (auto &d : it.second->getD()) {
-			cout << "TimingSlack " << it.first << " " << d->name << " " << it.second->getSlack(d->name) << "\n";
-		}
-		for (auto &q : it.second->getQ()) {
-			cout << "TimingSlack " << it.first << " " << q->name << " " << it.second->getSlack(q->name) << "\n";
-		}
-	}
-	for (auto &it : FlipFlopLib) {
-		cout << "GatePower " << it.first << " " << it.second->getPower() << "\n";
-	}*/
 }
 Point Board::NametoPoint(string PinName){
-	// flipflop pin
+	// flipflop gate pin
 	size_t pos = PinName.find('/');
 	if(pos != string::npos){
 		string cname = PinName.substr(0, pos);
-		for(auto &f : InstFlipFlop){
+		for(auto &f : InstToFlipFlop){
 			if(f.first != cname)continue;
 			string pname = PinName.substr(pos + 1, string::npos);
-			return f.second->getPoint(pname);
+			return f.second.getPoint(pname);
 		}
-		for(auto &g : InstGate){
+		for(auto &g : InstToGate){
 			if(g.first != cname)continue;
 			string pname = PinName.substr(pos + 1, string::npos);
-			return g.second->getPoint(pname);
+			return g.second.getPoint(pname);
 		}
 	}
 	// input output pin
@@ -319,26 +269,211 @@ Point Board::NametoPoint(string PinName){
 			}
 		}
 	}
-	return Point("",-1,-1);
+	cout << "Pin " << PinName << " can't be found\n";
+	return Point(-1, -1, "");
 }
 Board::~Board() {
 	Input.clear();
 	Output.clear();
 }
-vector<FlipFlop> Board::Banking(vector<FlipFlop> F){
+vector<FlipFlop> Board::Banking(vector<FlipFlop> F) {
 	vector<FlipFlop> result;
-	int n = 1; // total flipflop
-	int d = 0; // total pin
-	for(auto &it : F){
-		d += it.getN();
+	int sum = F.size();  // total pin
+	int index = 0;
+	// slack need to be set
+	while(sum > 3) {
+		int x, y; // need to be set
+		FlipFlop f = getFlipFlop(x, y, 4);
+		string CellName = "C" + CellNumber;
+		result.push_back(f);
+		NewFlipFlop.insert(CellName);
+		vector<Point> CurPin = f.getPin();
+		CellNumber++;
+		sum -= 4;
+		for(int i = index; i < index + 4; i++) {
+			vector<Point> PrevPin = F[i].getPin();
+			if(NewFlipFlop.find(F[i].getInstName()) != NewFlipFlop.end()) {
+				NewFlipFlop.erase(F[i].getInstName());
+			}
+			int d = 0, q = 0, c = 0;
+			for(auto &p : PrevPin) {
+				string prev = F[i].getInstName() + "/" + p.name;
+				string cur;
+				if(p.type == 'D') {
+					while(CurPin[d].type != 'D') {
+						d++;
+					}
+					cur = CellName + "/" + CurPin[d].name;
+				}
+				else if(p.type == 'Q') {
+					while(CurPin[q].type != 'Q') {
+						q++;
+					}
+					cur = CellName + "/" + CurPin[q].name;
+				}
+				else if(p.type == 'C') {
+					while(CurPin[c].type != 'C') {
+						c++;
+					}
+					cur = CellName + "/" + CurPin[c].name;
+				}
+				else {
+					cout << "not existing point\n";
+					break;
+				}
+				if(CurToPrev[prev] == "") {
+					PrevToCur[prev] = cur;
+					CurToPrev[cur] = prev;
+				}
+				else {
+					string tmp = CurToPrev[prev];
+					PrevToCur[tmp] = cur;
+					CurToPrev[cur] = tmp;
+					CurToPrev.erase(prev);
+				}
+			}
+		}
+		index += 4;
+	}
+	if(sum > 1) {
+		FlipFlop f = getFlipFlop(0, 0, 2);
+		string CellName = "C" + CellNumber;
+		result.push_back(f);
+		NewFlipFlop.insert(CellName);
+		vector<Point> CurPin = f.getPin();
+		CellNumber++;
+		sum -= 2;
+		for(int i = index; i < index + 2; i++) {
+			vector<Point> PrevPin = F[i].getPin();
+			int d = 0, q = 0, c = 0;
+			for(auto &p : PrevPin) {
+				string prev = F[i].getInstName() + "/" + p.name;
+				string cur;
+				if(p.type == 'D') {
+					while(CurPin[d].type != 'D') {
+						d++;
+					}
+					cur = CellName + "/" + CurPin[d].name;
+				}
+				else if(p.type == 'Q') {
+					while(CurPin[q].type != 'Q') {
+						q++;
+					}
+					cur = CellName + "/" + CurPin[q].name;
+				}
+				else if(p.type == 'C') {
+					while(CurPin[c].type != 'C') {
+						c++;
+					}
+					cur = CellName + "/" + CurPin[c].name;
+				}
+				else {
+					cout << "not existing point\n";
+					break;
+				}
+				if(CurToPrev[prev] == "") {
+					PrevToCur[prev] = cur;
+					CurToPrev[cur] = prev;
+				}
+				else {
+					string tmp = CurToPrev[prev];
+					PrevToCur[tmp] = cur;
+					CurToPrev[cur] = tmp;
+					CurToPrev.erase(prev);
+				}
+			}
+		}
+		index += 2;
+	}
+	if(sum > 0) {
+		FlipFlop f = getFlipFlop(0, 0, 1);
+		string CellName = "C" + CellNumber;
+		result.push_back(f);
+		NewFlipFlop.insert(CellName);
+		vector<Point> CurPin = f.getPin();
+		CellNumber++;
+		sum -= 1;
+		vector<Point> PrevPin = F[index].getPin();
+		int d = 0, q = 0, c = 0;
+		for(auto &p : PrevPin) {
+			string prev = F[index].getInstName() + "/" + p.name;
+			string cur;
+			if(p.type == 'D') {
+				while(CurPin[d].type != 'D') {
+					d++;
+				}
+				cur = CellName + "/" + CurPin[d].name;
+			}
+			else if(p.type == 'Q') {
+				while(CurPin[q].type != 'Q') {
+					q++;
+				}
+				cur = CellName + "/" + CurPin[q].name;
+			}
+			else if(p.type == 'C') {
+				while(CurPin[c].type != 'C') {
+					c++;
+				}
+				cur = CellName + "/" + CurPin[c].name;
+			}
+			else {
+				cout << "not existing point\n";
+				break;
+			}
+			if(CurToPrev[prev] == "") {
+				PrevToCur[prev] = cur;
+				CurToPrev[cur] = prev;
+			}
+			else {
+				string tmp = CurToPrev[prev];
+				PrevToCur[tmp] = cur;
+				CurToPrev[cur] = tmp;
+				CurToPrev.erase(prev);
+			}
+		}
 	}
 	return result;
-}  // no location
-vector<FlipFlop> Board::Debanking(FlipFlop F){
+}
+vector<FlipFlop> Board::Debanking(FlipFlop F) {
 	vector<FlipFlop> result;
+	int sum = F.getN();
+	vector<Point> PrevPin = F.getPin();
+	for(int i = 0; i < sum; i++){
+		FlipFlop f = getFlipFlop(0, 0, 1);
+		vector<Point> CurPin = f.getPin();
+		CellNumber++;
+		int d = 0, q = 0, c = 0;
+		for(auto &p : PrevPin){
+			string prev = F.getInstName() + "/" + p.name;
+			if(p.type == 'D') {
+				while(CurPin[d].type != 'D') {
+					d++;
+				}
+			}
+			else if(p.type == 'Q') {
+				while(CurPin[q].type != 'Q') {
+					q++;
+				}
+			}
+			else if(p.type == 'C') {
+				while(CurPin[c].type != 'C') {
+					c++;
+				}
+			}
+			else {
+				cout << "not existing point\n";
+				break;
+			}
+		}
+	}
 	return result;
-}  //  no location
-bool Board::Check(int x, int y){
+}   //  no location
+FlipFlop Board::getFlipFlop(int x, int y, int n) {
+	for(auto &it : FlipFlopLib) {
+		if(it.second.getN() == n)return it.second;
+	}
+}
+bool Board::Check(int x, int y) {
 	//  not on grid point
 	for(auto &it : PlacementRows){
 		int sx = it.first.first;
@@ -358,8 +493,8 @@ int Board::TNSCost() {
 }
 int Board::PowerCost() {
 	int sum = 0;
-	for (auto &it : InstFlipFlop) {
-		sum += it.second->getPower();
+	for (auto &it : InstToFlipFlop) {
+		sum += it.second.getPower();
 	}
 	return sum;
 }
