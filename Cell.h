@@ -34,7 +34,7 @@ struct Point {
 class Cell{
 private:
     string InstName;      // inst name of cell
-    string CellName;  // flipflop name of cell
+    string CellName;      // flipflop name of cell
     int Width;
     int Height;
     int PinCounts;
