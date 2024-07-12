@@ -5,17 +5,19 @@
 using namespace std;
 struct Point {
 	string name;  // name of point
-    char type;    // D,Q,Clk,I,O
-    string prev;  // before map
-    string cur;   // after map
+	char type;    // D,Q,Clk,I,O
 	int x;        // x coordinate of point
 	int y;        // y coordinate of point
 	float slack;  // slack of input/output point
-	Point(string name, int x, int y){
+	Point(int x, int y, string name) {
 		this->name = name;
 		this->x = x;
 		this->y = y;
 	}
+    Point(int x, int y){
+        this->x = x;
+        this->y = y;
+    }
 	Point(){
 		this->name = "";
 		this->x = -1;
@@ -31,24 +33,29 @@ struct Point {
 };
 class Cell{
 private:
-    string Name;
+    string InstName;      // inst name of cell
+    string CellName;  // flipflop name of cell
     int Width;
     int Height;
-    int PinCount;
-    vector<Point> Pin;
-    int x;
-    int y;
+    int PinCounts;
+    vector<Point> Pin;    // pins in cell
+    int x;                // x coordinate of cell
+    int y;                // y coordinate of cell
 public:
     Cell();
     Cell(int, int, int);
     void setPos(int, int);
+    int getX(void);
+    int getY(void);
     void setPin(vector<Point>);
     vector<Point> getPin(void);
     int getWidth(void);
     int getHeight(void);
     int getArea(void);
-    void setName(string);
-    string getName(void);
+    void setInstName(string);
+    string getInstName(void);
+    void setCellName(string);
+    string getCellName(void);
     int getPinCount(void);
     Point getPoint(string);
 };
