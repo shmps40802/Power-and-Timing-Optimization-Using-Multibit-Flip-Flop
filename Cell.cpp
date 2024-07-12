@@ -1,26 +1,33 @@
 #include "Cell.h"
+#include <iostream>
 Cell::Cell(){
     Width = 0;
     Height = 0;
-    PinCount = 0;
+    PinCounts = 0;
     this->x = 0;
     this->y = 0;
 }
-Cell::Cell(int w, int h, int p){
+Cell::Cell(int w, int h, int p) {
     Width = w;
     Height = h;
-    PinCount = p;
+    PinCounts = p;
     this->x = x;
     this->y = y;
 }
-void Cell::setPos(int x, int y){
+void Cell::setPos(int x, int y) {
     this->x = x;
     this->y = y;
 }
-void Cell::setPin(vector<Point> pin){
+int Cell::getX(void){
+    return x;
+}
+int Cell::getY(void){
+    return y;
+}
+void Cell::setPin(vector<Point> pin) {
     Pin = pin;
 }
-vector<Point> Cell::getPin(void){
+vector<Point> Cell::getPin(void) {
     return Pin;
 }
 int Cell::getWidth(void){
@@ -32,18 +39,25 @@ int Cell::getHeight(void){
 int Cell::getArea(void){
     return Width * Height;
 }
-void Cell::setName(string name){
-    Name = name;
+void Cell::setInstName(string name){
+    InstName = name;
 }
-string Cell::getName(void){
-    return Name;
+string Cell::getInstName(void){
+    return InstName;
+}
+void Cell::setCellName(string name){
+    CellName = name;
+}
+string Cell::getCellName(void){
+    return CellName;
 }
 int Cell::getPinCount(void){
-    return PinCount;
+    return PinCounts;
 }
 Point Cell::getPoint(string name){
     for(auto &it : Pin){
         if(it.name == name)return it;
     }
-    return Point("",-1,-1);
+    std::cout << "Point name " << name << " not be found\n";
+    return Point(-1, -1, "");
 }
