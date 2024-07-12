@@ -58,5 +58,6 @@ public:
     string getCellName(void);
     int getPinCount(void);
     Point getPoint(string);
+    void setNetName(string, string);
 };
 #endif
