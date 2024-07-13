@@ -402,31 +402,70 @@ bool Board::Check(int x, int y) {
 int Board::ManhattanDist(Point P1, Point P2) {
 	return Abs(P1.x - P2.x) + Abs(P1.y - P2.y);
 }
-int Board::TNSCost() {
-	int sum = 0;
+float Board::TNSCost() {
+	float sum = 0;
 	return sum;
 }
-int Board::PowerCost() {
+float Board::PowerCost() {
 	int sum = 0;
 	for (auto &it : InstToFlipFlop) {
 		sum += it.second.getPower();
 	}
 	return sum;
 }
-int Board::AreaCost() {
+float Board::AreaCost() {
 	int sum = 0;
 	return sum;
 }
-int Board::BinCost() {
-	int sum = 0;
-	for(int i = LowerLeftY; i < HigherRightY; i += SiteHeight){
-		for(int j = LowerLeftX; j < HigherRightX; j += SiteWidth){
-			
+float Board::BinCost() {
+	float sum = 0;
+	for(auto &it : InstToFlipFlop){
+		int fx = it.second.getX();
+		int fy = it.second.getY();
+		int fw = it.second.getWidth();
+		int fh = it.second.getHeight();
+		for(int i = fx / BinWidth * BinWidth; i < fx + fw; i += BinWidth) {
+			int w;
+			if(i + BinWidth > fx + fw)w = fx + fw - i;
+			else if(i > fx)w = BinWidth;
+			else w = i - fx;
+			for(int j = fy / BinHeight * BinHeight; j < fy + fh; j += BinHeight) {
+				int h;
+				if(j + BinHeight > fy + fh)h = fy + fh - j;
+				else if(j > fy)w = BinHeight;
+				else h = j - fy;
+				BinDensity[i][j] += (float) w * h;
+			}
+		}
+	}
+	for(auto &it : InstToGate){
+		int gx = it.second.getX();
+		int gy = it.second.getY();
+		int gw = it.second.getWidth();
+		int gh = it.second.getHeight();
+		for(int i = gx / BinWidth * BinWidth; i < gx + gw; i += BinWidth) {
+			int w;
+			if(i + BinWidth > gx + gw)w = gx + gw - i;
+			else if(i > gx)w = BinWidth;
+			else w = i - gx;
+			for(int j = gy / BinHeight * BinHeight; j < gy + gh; j += BinHeight) {
+				int h;
+				if(j + BinHeight > gy + gh)h = gy + gh - j;
+				else if(j > gy)w = BinHeight;
+				else h = j - gy;
+				BinDensity[i][j] += (float) w * h;
+			}
+		}
+	}
+	for(auto &it : BinDensity) {
+		for(auto &d : it.second) {
+			d.second /= (float) (BinWidth * BinHeight / 100);
+			if(d.second >= BinMaxUtil) sum += 1;
 		}
 	}
 	return sum;
 }
-int Board::Cost() {
+float Board::Cost() {
 	int sum = 0;
 	sum += Alpha * TNSCost() + Beta * PowerCost() + Gemma * AreaCost() + Delta * BinCost();
     return sum;
