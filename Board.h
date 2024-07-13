@@ -19,6 +19,7 @@ struct row{
 };
 class Board{
 private:
+	friend class Cluster;
 	int Alpha;
 	int Beta;
 	int Gemma;
