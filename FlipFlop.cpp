@@ -26,7 +26,7 @@ void FlipFlop::setPower(float power) {
 float FlipFlop::getPower(void) {
 	return GatePower;
 }
-void FlipFlop::setQpinDelay(int delay){
+void FlipFlop::setQpinDelay(float delay){
 	QpinDelay = delay;
 }
 int FlipFlop::getQpinDelay(void) {
