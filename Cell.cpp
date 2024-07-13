@@ -61,10 +61,3 @@ Point Cell::getPoint(string name){
     std::cout << "Point name " << name << " not be found\n";
     return Point(-1, -1, "");
 }
-void Cell::setNetName(string PinName, string NetName){
-	for(auto &it : Pin) {
-		if(it.name == PinName){
-			it.netname = NetName;
-		}
-	}
-}
