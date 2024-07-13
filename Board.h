@@ -52,6 +52,7 @@ private:
 	set<string> NewFlipFlop;                         // initial FlipFlop
 	map<string, string> PrevToCur;                   // previous pin to current pin
 	map<string, string> CurToPrev;                   // current pin to previous pin
+	map<int, map<int, float>> BinDensity;            // bin density of board
 public:
     Board();
 	~Board();
