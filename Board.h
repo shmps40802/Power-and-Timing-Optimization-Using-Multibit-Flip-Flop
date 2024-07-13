@@ -62,10 +62,10 @@ public:
 	FlipFlop getFlipFlop(int, int, int);                                 //
 	bool Check(int, int);
 	int ManhattanDist(Point, Point);
-	int TNSCost();
-	int PowerCost();
-	int AreaCost();
-	int BinCost();
-	int Cost();
+	float TNSCost();
+	float PowerCost();
+	float AreaCost();
+	float BinCost();
+	float Cost();
 };
 #endif
