@@ -12,14 +12,6 @@ FlipFlop::FlipFlop(int N, int width, int height, int P, vector<Point> pin)
 int FlipFlop::getN(void){
 	return N;
 }
-void FlipFlop::setSlack(string PinName, float slack) {
-	Point p = getPoint(PinName);
-	p.name = slack;
-}
-float FlipFlop::getSlack(string PinName) {
-	Point p = getPoint(PinName);
-	return p.slack;
-}
 void FlipFlop::setPower(float power) {
 	GatePower = power;
 }
@@ -33,8 +25,14 @@ int FlipFlop::getQpinDelay(void) {
 	return QpinDelay;
 }
 void FlipFlop::display(void) {
-	cout << getName() << " " << N << " " << getWidth() << " " << getHeight() << " " << getPinCount() << "\n";
+	cout << getCellName() << " " << N << " " << getWidth() << " " << getHeight() << " " << getPinCount() << "\n";
 	for (auto &p : getPin()) {
 		cout << "Pin " <<p .name << " " << p.x << " " << p.y << "\n";
 	}
+}
+void FlipFlop::setSlack(string PinName, float slack){
+    this->slack[PinName] = slack;
+}
+float FlipFlop::getSlack(string PinName){
+    return slack[PinName];
 }
