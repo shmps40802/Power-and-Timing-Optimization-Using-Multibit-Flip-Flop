@@ -414,7 +414,10 @@ float Board::PowerCost() {
 	return sum;
 }
 float Board::AreaCost() {
-	int sum = 0;
+	float sum = 0;
+	for(auto &it : InstToFlipFlop){
+		sum += it.second.getArea();
+	}
 	return sum;
 }
 float Board::BinCost() {
