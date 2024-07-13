@@ -15,7 +15,7 @@ public:
 	float getSlack(string);
 	void setPower(float);
 	float getPower(void);
-	void setQpinDelay(int);
+	void setQpinDelay(float);
 	int getQpinDelay(void);
 	void display(void);
 };
