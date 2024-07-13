@@ -427,12 +427,12 @@ float Board::BinCost() {
 		for(int i = fx / BinWidth * BinWidth; i < fx + fw; i += BinWidth) {
 			int w;
 			if(i + BinWidth > fx + fw)w = fx + fw - i;
-			else if(i > fx)w = BinWidth;
+			else if(i >= fx)w = BinWidth;
 			else w = i - fx;
 			for(int j = fy / BinHeight * BinHeight; j < fy + fh; j += BinHeight) {
 				int h;
 				if(j + BinHeight > fy + fh)h = fy + fh - j;
-				else if(j > fy)w = BinHeight;
+				else if(j >= fy)w = BinHeight;
 				else h = j - fy;
 				BinDensity[i][j] += (float) w * h;
 			}
