@@ -4,11 +4,10 @@
 #include <string>
 using namespace std;
 struct Point {
-	string name;  // name of point
-	char type;    // D,Q,Clk,I,O
-	int x;        // x coordinate of point
-	int y;        // y coordinate of point
-	float slack;  // slack of input/output point
+	string name;     // name of point
+    char type;       // D, Q, Clk, I, O
+	int x;           // x coordinate of point
+	int y;           // y coordinate of point
 	Point(int x, int y, string name) {
 		this->name = name;
 		this->x = x;
@@ -34,13 +33,14 @@ struct Point {
 class Cell{
 private:
     string InstName;      // inst name of cell
-    string CellName;      // flipflop(gate) name of cell
+    string CellName;      // flipflop name of cell
     int Width;
     int Height;
     int PinCounts;
     vector<Point> Pin;    // pins in cell
     int x;                // x coordinate of cell
     int y;                // y coordinate of cell
+    float slack;          // slack of output point
 public:
     Cell();
     Cell(int, int, int);
@@ -58,6 +58,5 @@ public:
     string getCellName(void);
     int getPinCount(void);
     Point getPoint(string);
-    void setNetName(string, string);
 };
 #endif
