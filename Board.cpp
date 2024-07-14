@@ -214,7 +214,7 @@ void Board::ReadFile() {
 	GatePower FF2 17
 	*/
 	fin >> DisplacementDelay;
-	float delay, slack;
+	double delay, slack;
 	for(size_t i = 0; i < FlipFlopLib.size(); i++) {
 		fin >> Str >> FlipFlopName >> delay;
 		FlipFlopLib[FlipFlopName].setQpinDelay(delay);
@@ -227,7 +227,7 @@ void Board::ReadFile() {
 		fin >> Str >> InstName >> name >> slack;
 		InstToFlipFlop[InstName].setSlack(name, slack);
 	}
-	int power;
+	double power;
 	for (auto &it : FlipFlopLib) {
 		fin >> Str >> name >> power;
 		FlipFlopLib[name].setPower(power);
