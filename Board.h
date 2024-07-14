@@ -46,7 +46,7 @@ private:
 	map<string, FlipFlop> InstToFlipFlop;            // inst name to FlipFlop
 	map<string, Gate> InstToGate;                    // inst name to Gate
 	map<string, set<string>> Net;                    // net connection
-	map<string, string> PointToNet;                  // point name to net name
+	map<string, string> PointToNet;                  // point name to net name C1/D -> N1
 	map<int, list<row>> Location;                    // location of FlipFlop
 	map<pair<int, int>, vector<int>> PlacementRows;  // grid point info
 	set<string> NewFlipFlop;                         // initial FlipFlop
@@ -61,13 +61,15 @@ public:
 	Point NametoPoint(string);
 	void Banking(vector<vector<FlipFlop>>, vector<Point>, vector<int>);  // only banking 1 bit
 	vector<FlipFlop> Debanking(FlipFlop);                                // only debanking into 1 bit
-	FlipFlop getFlipFlop(int, int, int);                                 //
+	float dfs(string, map<string, bool>&, float&);
+	float compare(vector<FlipFlop> prev, FlipFlop cur, int x, int y);
 	bool Check(int, int);
 	int ManhattanDist(Point, Point);
+	// cost function
 	float TNSCost();
 	float PowerCost();
 	float AreaCost();
-	float BinCost();
-	float Cost();
+	float BinCost(); // on grid point
+    float Cost();
 };
 #endif
