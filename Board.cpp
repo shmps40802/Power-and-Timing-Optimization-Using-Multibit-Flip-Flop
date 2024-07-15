@@ -388,6 +388,128 @@ FlipFlop Board::getFlipFlop(int x, int y, int n) {
 	}
 	return FlipFlop();
 }
+void Board::Ddfs(string PinName, map<string, bool> &visited, float &WL, float &NS, int x, int y, bool &t) {
+	visited[PinName] = true;
+	if(t)return;
+	cout << PinName << "\n";
+	string netname = PointToNet[PinName];
+	for(auto &it : Net[netname]) {
+		size_t pos = it.find("/");
+		if(visited[it] || pos == string::npos)continue;
+		if(it != PinName)cout << it << " from " << netname << "\n";
+		else cout << "error\n";
+		if(PinName.find("D") != string::npos && WL == 0) {
+			WL = (float) (ManhattanDist(NametoPoint(PinName), NametoPoint(it))
+						- ManhattanDist(Point(x, y), NametoPoint(it)));
+			if(WL == 0) {
+				t = 1;
+				return;
+			} // no change
+		}
+		string cname = it.substr(0, pos);
+		string pname = it.substr(pos + 1, string::npos);
+		if(InstToFlipFlop.find(cname) == InstToFlipFlop.end()) {
+			for(auto &p : InstToGate[cname].getPin()) {
+				if(p.name.find("IN") == string::npos) continue;
+				Ddfs(cname + "/" + p.name, visited, WL, NS, x, y, t);
+			}
+		}  // connect to gate
+		else if(PinName.find("D") == string::npos) {
+			cout << it << " end\n";
+			float nslack = NS < 0 ? NS : 0;
+			float newslack = NS + DisplacementDelay * WL;
+			float newnslack = newslack < 0 ? newslack : 0;
+			NS = newnslack - nslack;
+			t = 1;
+			return;
+		}  // connect to flipflop
+		WL = 0;
+	}
+}
+void Board::Qdfs(string PinName, map<string, bool> &visited, float &WL, float &NS, int x, int y) {
+	visited[PinName] = true;
+	//cout << PinName << "\n";
+	string netname = PointToNet[PinName];
+	for(auto &it : Net[netname]) {
+		size_t pos = it.find("/");
+		if(visited[it] || pos == string::npos)continue;
+		/*if(it != PinName)cout << it << " from " << netname << "\n";
+		else cout << "error\n";*/
+		if(PinName.find("Q") != string::npos) {
+			WL = (float) (ManhattanDist(NametoPoint(PinName), NametoPoint(it))
+						- ManhattanDist(Point(x, y), NametoPoint(it)));
+		}
+		string cname = it.substr(0, pos);
+		string pname = it.substr(pos + 1, string::npos);
+		if(InstToFlipFlop.find(cname) == InstToFlipFlop.end()) {
+			for(auto &p : InstToGate[cname].getPin()) {
+				if(p.name.find("OUT") == string::npos) continue;
+				Qdfs(cname + "/" + p.name, visited, WL, NS, x, y);
+			}
+		}  // connect to gate
+		else {
+			//cout << it << " end\n";
+			float slack = InstToFlipFlop[cname].getSlack()[pname];
+			float nslack = slack < 0 ? slack : 0;
+			float newslack = slack + DisplacementDelay * WL;
+			float newnslack = newslack < 0 ? newslack : 0;
+			NS -= nslack;
+			NS += newnslack;
+		}  // connect to flipflop
+		WL = 0;
+	}
+}
+float Board::bankingCompare(vector<FlipFlop> prev, FlipFlop cur) {
+    int N = cur.getN();
+	int x = cur.getX();
+	int y = cur.getY();
+	float sum = 0;
+	float PowerComp = cur.getPower();
+	float AreaComp = cur.getArea();
+    float NSComp = 0;
+	for(auto &f : prev) {
+		PowerComp -= f.getPower();
+		AreaComp -= f.getArea();
+	}
+	for(auto &f : prev) {
+		vector<Point> prevPin = f.getPin();
+		vector<Point> curPin = cur.getPin();
+		int d = 0, q = 0, c = 0;
+		for(auto &p : prevPin) {
+			if(p.type == 'D') {
+				map<string, bool> visited;
+				string PinName = f.getInstName() + "/" + p.name;
+				float WL = 0, NS = f.getSlack()[p.name];
+				bool t = 0;
+				while(curPin[d].type != 'D') {
+					d++;
+				}
+				int fx = cur.getX() + curPin[d].x;
+				int fy = cur.getY() + curPin[d].y;
+				Ddfs(PinName, visited, WL, NS, fx, fy, t);
+				if(t)NSComp += NS;
+			}
+			else if(p.type == 'Q') {
+				map<string, bool> visited;
+				string PinName = f.getInstName() + "/" + p.name;
+				float WL = 0, NS = 0;
+				while(curPin[q].type != 'Q') {
+					q++;
+				}
+				int gx = cur.getX() + curPin[q].x;
+				int gy = cur.getY() + curPin[q].y;
+				Qdfs(PinName, visited, WL, NS, gx, gy);
+				NSComp += NS;
+			}
+		}
+	}
+    sum += Alpha * NSComp + Beta * PowerComp + Gemma * AreaComp;
+    return sum;
+}
+float Board::singleCompare(FlipFlop F1, FlipFlop F2) {
+	float sum = 0;
+	return sum;
+}
 bool Board::Check(int x, int y) {
 	//  not on grid point
 	for(auto &it : PlacementRows){
