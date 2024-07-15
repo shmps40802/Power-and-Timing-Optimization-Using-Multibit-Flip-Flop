@@ -55,7 +55,7 @@ int Cell::getPinCount(void){
     return PinCounts;
 }
 Point Cell::getPoint(string name){
-    for(auto &it : Pin){
+    for(auto &it : Pin) {
         if(it.name == name)return it;
     }
     std::cout << "Point name " << name << " not be found\n";
