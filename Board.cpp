@@ -506,9 +506,48 @@ float Board::bankingCompare(vector<FlipFlop> prev, FlipFlop cur) {
     sum += Alpha * NSComp + Beta * PowerComp + Gemma * AreaComp;
     return sum;
 }
-float Board::singleCompare(FlipFlop F1, FlipFlop F2) {
+float Board::singleCompare(FlipFlop prev, FlipFlop cur) {
+	int N = cur.getN();
+	int x = cur.getX();
+	int y = cur.getY();
 	float sum = 0;
-	return sum;
+	float PowerComp = cur.getPower();
+	float AreaComp = cur.getArea();
+	float NSComp = 0;
+	PowerComp -= prev.getPower();
+	AreaComp -= prev.getArea();
+	vector<Point> prevPin = prev.getPin();
+	vector<Point> curPin = cur.getPin();
+	int d = 0, q = 0, c = 0;
+	for(auto &p : prevPin) {
+		if(p.type == 'D') {
+			map<string, bool> visited;
+			string PinName = prev.getInstName() + "/" + p.name;
+			float WL = 0, NS = prev.getSlack()[p.name];
+			bool t = 0;
+			while(curPin[d].type != 'D') {
+				d++;
+			}
+			int fx = cur.getX() + curPin[d].x;
+			int fy = cur.getY() + curPin[d].y;
+			Ddfs(PinName, visited, WL, NS, fx, fy, t);
+			if(t)NSComp += NS;
+		}
+		else if(p.type == 'Q') {
+			map<string, bool> visited;
+			string PinName = prev.getInstName() + "/" + p.name;
+			float WL = 0, NS = 0;
+			while(curPin[q].type != 'Q') {
+				q++;
+			}
+			int gx = cur.getX() + curPin[q].x;
+			int gy = cur.getY() + curPin[q].y;
+			Qdfs(PinName, visited, WL, NS, gx, gy);
+			NSComp += NS;
+		}
+	}
+    sum += Alpha * NSComp + Beta * PowerComp + Gemma * AreaComp;
+    return sum;
 }
 bool Board::Check(int x, int y) {
 	//  not on grid point
