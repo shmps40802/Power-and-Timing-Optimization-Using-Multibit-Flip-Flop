@@ -18,7 +18,7 @@ public:
 	void setQpinDelay(float);
 	int getQpinDelay(void);
 	void display(void);
-	void setSlack(string, float);
-	float getSlack(string);
+    void setSlack(string, float);
+    map<string, float> getSlack(void);
 };
 #endif
