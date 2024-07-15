@@ -12,7 +12,7 @@
 struct row{
 	int col;
 	string name;
-	row(int col, string name){
+	row(int col, string name) {
 		this->col = col;
 		this->name = name;
 	}
@@ -61,8 +61,10 @@ public:
 	Point NametoPoint(string);
 	void Banking(vector<vector<FlipFlop>>, vector<Point>, vector<int>);  // only banking 1 bit
 	vector<FlipFlop> Debanking(FlipFlop);                                // only debanking into 1 bit
-	float dfs(string, map<string, bool>&, float&);
-	float compare(vector<FlipFlop> prev, FlipFlop cur, int x, int y);
+	void Ddfs(string, map<string, bool>&, float&, float&, int, int, bool&);
+	void Qdfs(string, map<string, bool>&, float&, float&, int, int);
+	float bankingCompare(vector<FlipFlop>, FlipFlop);
+	float singleCompare(FlipFlop, FlipFlop);
 	bool Check(int, int);
 	int ManhattanDist(Point, Point);
 	// cost function
