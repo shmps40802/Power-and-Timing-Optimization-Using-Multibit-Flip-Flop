@@ -33,6 +33,6 @@ void FlipFlop::display(void) {
 void FlipFlop::setSlack(string PinName, float slack){
     this->slack[PinName] = slack;
 }
-float FlipFlop::getSlack(string PinName){
-    return slack[PinName];
+map<string, float> FlipFlop::getSlack(void) {
+    return slack;
 }
