@@ -1,35 +1,41 @@
 #include "Cluster.h"
 #include <ctime>
 #include <random>
-Cluster::Cluster()  {
+Cluster::Cluster() {
 	n = 20;
 	k = 100;
 	l = 50;
-	epochs = 50;
+	r = 10;
+	epochs = 5;
 	maxBits = 4;
 	MinVariance = DBL_MAX;
 	Max = 1281000;
-	initializeVector(k, l);
+	p = 10;
+	q = 10;
+	// initializeVector(k, l);
 }
 
-Cluster::Cluster(int n, int k, int l, int epochs, int maxBits, double MinVariance, double Max) {
+Cluster::Cluster(int n, int k, int l, int r, int epochs, int maxBits, double MinVariance, double Max, int p, int q) {
 	this->n = n;
 	this->k = k;
 	this->l = l;
+	this->r = r;
 	this->epochs = epochs;
 	this->maxBits = maxBits;
 	this->MinVariance = MinVariance;
 	this->Max = Max;
-	initializeVector(k, l);
+	this->p = p;
+	this->q = q;
+	// initializeVector(k, l);
 }
 
 void Cluster::initializeVector(int k, int l) {
-	KClusters.resize(k);
-	KLClusters.resize(k, vector<vector<FlipFlop>>(l));
-	centroids.resize(k);
-	KCentroids.resize(k, vector<FlipFlop>(l));
-	counts.resize(k, 0);
-	KCounts.resize(k, vector<int>(l, 0));
+	// KClusters.resize(k);
+	// KLClusters.resize(k, vector<vector<FlipFlop>>(l));
+	// centroids.resize(k);
+	// KCentroids.resize(k, vector<FlipFlop>(l));
+	// counts.resize(k, 0);
+	// KCounts.resize(k, vector<int>(l, 0));
 }
 double Cluster::variance() {
 	vector<double> arr(k, 0);
@@ -47,6 +53,9 @@ double Cluster::variance() {
 	return sum;
 }
 void Cluster::kMeansClustering(vector<FlipFlop>& points, vector<FlipFlop>& centroids, vector<int>& counts, int epochs, int k) {
+	centroids.resize(k);
+	counts.resize(k, 0);
+
 	srand(time(0));
 	size_t n = points.size();
 	set<int> S;
@@ -115,20 +124,33 @@ void Cluster::kmeans(Board& board) {
 	}
 	kMeansClustering(DataPoints, centroids, counts, epochs, k);
 	//cout << t << " variation\n";
+	KClusters.resize(k);
 	for (auto& p : DataPoints) {
 		KClusters[p.getCluster()].push_back(p);
 	}
+	KCentroids.resize(k);
+	KCounts.resize(k);
 	for (int i = 0; i < k; i++) {
 		for (int j = 0; j < n; j++) {
 			//kMeansClustering(KClusters[i], KCentroids[i], KCounts[i], epochs, l);
 		}
+		if (KClusters[i].size() == 0) { //cluster has no points
+			continue;
+		}
+		l = KClusters[i].size() / 10; //number of centroid
+		if (l == 0) {
+			l = 1;
+		}
 		kMeansClustering(KClusters[i], KCentroids[i], KCounts[i], epochs, l);
 	}
+	KLClusters.resize(k);
 	for (int i = 0; i < k; i++) {
+		KLClusters[i].resize(KCentroids[i].size());
 		for (auto& p : KClusters[i]) {
 			KLClusters[i][p.getCluster()].push_back(p);
 		}
 	}
+	//----------------------------------------------------------------------------------------
 	unordered_map<int, int> cnt;  //flip flop number distribution in cluster
 	int sum = 0;
 	for (int i = 0; i < k; i++) {
@@ -144,10 +166,16 @@ void Cluster::kmeans(Board& board) {
 	for (auto& it : cnt) {
 		cout << "flip flop numbers: " << it.first << "   counts: " << it.second << endl;
 	}
-
-	for(auto& it : KLClusters) {
-		for(auto& it2 : it) {
-			findOptimalGrouping(it2, board);
+	cout << "KLClusters.size()  " << KLClusters.size() << endl;
+	for (int i = 0; i < KLClusters.size(); i++) {
+		cout << "KLClusters[" << i << "].size()  " << KLClusters[i].size() << endl;
+	}
+	//----------------------------------------------------------------------------------------
+	for (auto& it : KLClusters) {
+		for (auto& it2 : it) {
+			if (it2.size() != 0) {
+				findOptimalGrouping(it2, board);
+			}
 		}
 	}
 }
@@ -159,7 +187,7 @@ void Cluster::findOptimalGrouping(vector<FlipFlop>& points, Board& board) {
 	//optimize every Flip Flop in the cluster
 	for (const auto& it : points) {
 		FlipFlop before = it;
-		for(auto& it2 : FlipFlopLib) {
+		for (auto& it2 : FlipFlopLib) {
 			if (it2.getN() == minBits) {
 				FlipFlop after = it2;
 				after.setPos(before.getX(), before.getY());
@@ -174,7 +202,7 @@ void Cluster::findOptimalGrouping(vector<FlipFlop>& points, Board& board) {
 		updateFlipFlop(it, before, board);
 	}
 
-	vector<vector<pair<vector<FlipFlop>,FlipFlop>>> BankedFlipFlops(p);
+	vector<vector<pair<vector<FlipFlop>, FlipFlop>>> BankedFlipFlops(p);
 	vector<float> reducedCosts(p, 0.0);
 	for (int i = 0; i < p; i++) { //repeat p times, find the best one
 		//bank some Flip Flop to multibits
@@ -255,7 +283,7 @@ void Cluster::findOptimalGrouping(vector<FlipFlop>& points, Board& board) {
 	}
 	float cost = 0;
 	int best = 0;
-	for(int i = 0; i < p; i++) {
+	for (int i = 0; i < p; i++) {
 		if (reducedCosts.at(i) < cost) {
 			cost = reducedCosts.at(i);
 			best = i;
@@ -270,7 +298,7 @@ void Cluster::updateFlipFlop(FlipFlop before, FlipFlop after, Board& board) {
 	//update flip flop from before to after
 }
 void Cluster::updateBankedFlipFlop(vector<FlipFlop>, FlipFlop, Board&) {
-		//update banked flip flop
+	//update banked flip flop
 }
 bool Cluster::compareFlipFlop(FlipFlop& lhs, FlipFlop& rhs) {
 	if (lhs.getN() == rhs.getN()) {
