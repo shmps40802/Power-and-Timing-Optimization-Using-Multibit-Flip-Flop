@@ -1,6 +1,7 @@
 #include "Cluster.h"
 #include <ctime>
 #include <random>
+#include <cctype>
 Cluster::Cluster() {
 	n = 20;
 	k = 100;
@@ -151,15 +152,27 @@ void Cluster::kmeans(Board& board) {
 		}
 	}
 	//----------------------------------------------------------------------------------------
-	unordered_map<int, int> cnt;  //flip flop number distribution in cluster
 	int sum = 0;
-	for (int i = 0; i < k; i++) {
-		for (int j = 0; j < l; j++) {
-			if (cnt.find(KCounts[i][j]) == cnt.end()) {
-				cnt.insert({ KCounts[i][j],1 });
+	for (auto& it : KClusters) {
+		sum += it.size();
+	}
+	cout<<"number of Flip Flop in KClusters:  "<<sum<<endl;
+	sum = 0;
+	for (auto& it : KLClusters) {
+		for (auto& it2 : it) {
+			sum += it2.size();
+		}
+	}
+	cout << "number of Flip Flop in KLClusters:  " << sum << endl;
+	map<int, int> cnt;  //flip flop number distribution in cluster
+	sum = 0;
+	for (auto &it : KCounts) {
+		for (auto& it2 : it) {
+			if (cnt.find(it2) == cnt.end()) {
+				cnt.insert({ it2,1 });
 			}
 			else {
-				cnt.at(KCounts[i][j])++;
+				cnt.at(it2)++;
 			}
 		}
 	}
@@ -208,9 +221,9 @@ void Cluster::findOptimalGrouping(vector<FlipFlop>& points, Board& board) {
 		//bank some Flip Flop to multibits
 		for (int j = 0; j < q; j++) {
 			srand(time(0));
-			int bitNum = availableBits.at(rand() / availableBits.size()); //bit number to be banked
+			int bitNum = availableBits.at(rand() % availableBits.size()); //bit number to be banked
 			while (bitNum == minBits) {
-				bitNum = availableBits.at(rand() / availableBits.size());
+				bitNum = availableBits.at(rand() % availableBits.size());
 			}
 			vector<FlipFlop> pointsToBank;
 			int num = 0;
