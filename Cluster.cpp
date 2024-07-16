@@ -1,5 +1,6 @@
-# include "Cluster.h"
-#include <ctime> 
+#include "Cluster.h"
+#include <ctime>
+#include <random>
 Cluster::Cluster()  {
 	n = 20;
 	k = 100;
@@ -24,17 +25,18 @@ Cluster::Cluster(int n, int k, int l, int epochs, int maxBits, double MinVarianc
 
 void Cluster::initializeVector(int k, int l) {
 	KClusters.resize(k);
-	KLClusters.resize(k, vector<vector<Point>>(l));
+	KLClusters.resize(k, vector<vector<FlipFlop>>(l));
 	centroids.resize(k);
-	KCentroids.resize(k, vector<Point>(l));
+	KCentroids.resize(k, vector<FlipFlop>(l));
 	counts.resize(k, 0);
 	KCounts.resize(k, vector<int>(l, 0));
 }
 double Cluster::variance() {
 	vector<double> arr(k, 0);
 	for (auto& p : DataPoints) {
-		int c = p.cluster;
-		double d = p.distance(centroids[c]);
+		int c = p.getCluster();
+		//double d = p.distance(centroids[c]);
+		double d = distance(p, centroids[c]);
 		arr[c] += d * d;
 	}
 	double sum = 0;
@@ -44,49 +46,60 @@ double Cluster::variance() {
 	}
 	return sum;
 }
-void Cluster::kMeansClustering(vector<Point>& points, vector<Point>& centroids, vector<int>& counts, int epochs, int k) {
+void Cluster::kMeansClustering(vector<FlipFlop>& points, vector<FlipFlop>& centroids, vector<int>& counts, int epochs, int k) {
 	srand(time(0));
 	size_t n = points.size();
 	set<int> S;
-	for (int i = 0; i < k; ++i) {
+	for (int i = 0; i < k; ++i) { //find k centroids
 		int s = rand() % n;
 		while (S.find(s) != S.end()) {
 			s = rand() % n;
 		}
 		S.insert(s);
-		centroids[i] = points[s]; //找出k個質心，位於座標points[s]上
+		centroids[i] = points[s]; //centroid located at points[s]
 	}
-	while (epochs--) { //迭代次數
+	while (epochs--) { //iteration times
 		for (auto& p : points) {
 			double minDist = Max;
 			for (int i = 0; i < k; i++) {
-				double dist = p.distance(centroids[i]); //p與質心的距離
+				double dist = distance(p, centroids[i]); //distance from p to centroids[i]
 				if (dist < minDist) {
-					p.cluster = i;
+					//p.cluster = i;
+					p.setCluster(i);
 					minDist = dist;
 				}
 			}
 		}
 		vector<double> sumX(k, 0);
 		vector<double> sumY(k, 0);
-		fill(counts.begin(), counts.end(), 0); //將counts設為0
+		fill(counts.begin(), counts.end(), 0); //set counts to 0
 		for (auto& it : points) {
-			int clusterId = it.cluster;
+			int clusterId = it.getCluster();
 			counts[clusterId]++;
-			sumX[clusterId] += (it.x - Max);
-			sumY[clusterId] += (it.y - Max);
+			sumX[clusterId] += (it.getX() - Max);
+			sumY[clusterId] += (it.getY() - Max);
 		}
 		for (int i = 0; i < k; i++) {
-			centroids[i].x = Max + sumX[i] / (double)counts[i]; //新的cluster質心位置
-			centroids[i].y = Max + sumY[i] / (double)counts[i];
+			centroids[i].setPos(Max + sumX[i] / (double)counts[i], Max + sumY[i] / (double)counts[i]); //new cluster centroid position
 		}
 	}
 }
+double Cluster::distance(FlipFlop a, FlipFlop b) {
+	return abs(a.getX() - b.getX()) + abs(a.getY() - b.getY());
+}
 void Cluster::readData(Board& board) {
-	ifstream file;
 	for (auto& it : board.InstToFlipFlop) {
-		DataPoints.push_back(Point(it.second.getX(), it.second.getY()));
+		DataPoints.push_back(it.second);
 	}
+	for (auto& it : board.FlipFlopLib) {
+		FlipFlopLib.push_back(it.second);
+		int bits = it.second.getN();
+		auto it2 = find(availableBits.begin(), availableBits.end(), bits);
+		if (it2 == availableBits.end()) {
+			availableBits.push_back(it.second.getN()); //add available n bits flip flops to availableBits
+		}
+	}
+	sort(FlipFlopLib.begin(), FlipFlopLib.end(), compareFlipFlop); //sort FlipFlop library by number of bits and name
 }
 void Cluster::kmeans(Board& board) {
 	readData(board);
@@ -103,19 +116,20 @@ void Cluster::kmeans(Board& board) {
 	kMeansClustering(DataPoints, centroids, counts, epochs, k);
 	//cout << t << " variation\n";
 	for (auto& p : DataPoints) {
-		KClusters[p.cluster].push_back(p);
+		KClusters[p.getCluster()].push_back(p);
 	}
 	for (int i = 0; i < k; i++) {
 		for (int j = 0; j < n; j++) {
-			kMeansClustering(KClusters[i], KCentroids[i], KCounts[i], epochs, l);
+			//kMeansClustering(KClusters[i], KCentroids[i], KCounts[i], epochs, l);
 		}
+		kMeansClustering(KClusters[i], KCentroids[i], KCounts[i], epochs, l);
 	}
 	for (int i = 0; i < k; i++) {
 		for (auto& p : KClusters[i]) {
-			KLClusters[i][p.cluster].push_back(p);
+			KLClusters[i][p.getCluster()].push_back(p);
 		}
 	}
-	unordered_map<int, int> cnt; //cluster中flip flop數量分布
+	unordered_map<int, int> cnt;  //flip flop number distribution in cluster
 	int sum = 0;
 	for (int i = 0; i < k; i++) {
 		for (int j = 0; j < l; j++) {
@@ -130,4 +144,149 @@ void Cluster::kmeans(Board& board) {
 	for (auto& it : cnt) {
 		cout << "flip flop numbers: " << it.first << "   counts: " << it.second << endl;
 	}
+
+	for(auto& it : KLClusters) {
+		for(auto& it2 : it) {
+			findOptimalGrouping(it2, board);
+		}
+	}
+}
+void Cluster::findOptimalGrouping(vector<FlipFlop>& points, Board& board) {
+	//already debanking every Flip Flop to smallest bit
+	auto min_it = min_element(availableBits.begin(), availableBits.end());
+	int minBits = *min_it;
+
+	//optimize every Flip Flop in the cluster
+	for (const auto& it : points) {
+		FlipFlop before = it;
+		for(auto& it2 : FlipFlopLib) {
+			if (it2.getN() == minBits) {
+				FlipFlop after = it2;
+				after.setPos(before.getX(), before.getY());
+				if (board.singleCompare(before, after) < 0) { //cost reduce
+					before = after;
+				}
+			}
+			else if (it2.getN() > minBits) {
+				break;
+			}
+		}
+		updateFlipFlop(it, before, board);
+	}
+
+	vector<vector<pair<vector<FlipFlop>,FlipFlop>>> BankedFlipFlops(p);
+	vector<float> reducedCosts(p, 0.0);
+	for (int i = 0; i < p; i++) { //repeat p times, find the best one
+		//bank some Flip Flop to multibits
+		for (int j = 0; j < q; j++) {
+			srand(time(0));
+			int bitNum = availableBits.at(rand() / availableBits.size()); //bit number to be banked
+			while (bitNum == minBits) {
+				bitNum = availableBits.at(rand() / availableBits.size());
+			}
+			vector<FlipFlop> pointsToBank;
+			int num = 0;
+			default_random_engine rng(static_cast<unsigned int>(time(0)));
+			shuffle(points.begin(), points.end(), rng); //Randomly arrange the points to be synthesized
+			for (auto& it : points) { //choose some flip flops total bits = bitNum
+				if (it.getN() == bitNum) //already banked
+				{
+					continue;
+				}
+				else if (num + it.getN() == bitNum) {
+					pointsToBank.push_back(it);
+					num += it.getN();
+					break;
+				}
+				else if (num + it.getN() < bitNum) {
+					pointsToBank.push_back(it);
+					num += it.getN();
+				}
+				else {
+					continue;
+				}
+			}
+			//banking
+			int x = 0; //(x,y) is the center of the points to be banked
+			int y = 0;
+			for (auto& it : pointsToBank) {
+				x += it.getX();
+				y += it.getY();
+			}
+			x /= pointsToBank.size();
+			y /= pointsToBank.size();
+			FlipFlop bankedFlipFlop;
+			if (num == bitNum) {
+				for (auto& it2 : FlipFlopLib) {
+					if (it2.getN() == bitNum) {
+						FlipFlop after = it2;
+						after.setPos(x, y);
+						if (board.bankingCompare(pointsToBank, after) < 0) { //cost reduce
+							bankedFlipFlop = after;
+							break;
+						}
+					}
+					else if (it2.getN() > bitNum) {
+						break;
+					}
+				}
+				if (bankedFlipFlop.getN() == bitNum) { //found banked flip flop
+					for (auto& it2 : FlipFlopLib) {
+						if (it2.getN() == bitNum) {
+							FlipFlop after = it2;
+							after.setPos(x, y);
+							if (board.singleCompare(bankedFlipFlop, after) < 0) { //cost reduce
+								bankedFlipFlop = after;
+							}
+						}
+						else if (it2.getN() > bitNum) {
+							break;
+						}
+					}
+					BankedFlipFlops.at(i).push_back(make_pair(pointsToBank, bankedFlipFlop));
+					//updateBankedFlipFlop(pointsToBank, bankedFlipFlop, board);
+				}
+			}
+		}
+		//calculate the total cost reduction
+		for (auto& it : BankedFlipFlops.at(i)) {
+			reducedCosts.at(i) += board.bankingCompare(it.first, it.second);
+		}
+	}
+	float cost = 0;
+	int best = 0;
+	for(int i = 0; i < p; i++) {
+		if (reducedCosts.at(i) < cost) {
+			cost = reducedCosts.at(i);
+			best = i;
+		}
+	}
+	//update the flip flops from best banking solution
+	for (auto& it : BankedFlipFlops.at(best)) {
+		updateBankedFlipFlop(it.first, it.second, board);
+	}
+}
+void Cluster::updateFlipFlop(FlipFlop before, FlipFlop after, Board& board) {
+	//update flip flop from before to after
+}
+void Cluster::updateBankedFlipFlop(vector<FlipFlop>, FlipFlop, Board&) {
+		//update banked flip flop
+}
+bool Cluster::compareFlipFlop(FlipFlop& lhs, FlipFlop& rhs) {
+	if (lhs.getN() == rhs.getN()) {
+		string lnum = "";
+		string rnum = "";
+		for (char c : lhs.getCellName()) {
+			if (std::isdigit(c)) {
+				lnum += c;
+			}
+		}
+		for (char c : rhs.getCellName()) {
+			if (std::isdigit(c)) {
+				rnum += c;
+			}
+		}
+		return stoi(lnum) < stoi(rnum);
+	}
+	return lhs.getN() < rhs.getN();
 }
