@@ -14,6 +14,7 @@ private:
     int n;
     int k; //divide into k clusters
     int l;  //every cluster divide into l clusters
+    int r; // (points / centroid)
     int epochs; //number of iterations to choose points' cluster
     int maxBits;
     double MinVariance;
@@ -42,14 +43,14 @@ private:
     vector<int> availableBits; //available bits in FlipFlopLib
 public:
     Cluster();
-    Cluster(int, int, int, int, int, double, double);
+    Cluster(int, int, int, int, int, int, double, double, int, int);
     void initializeVector(int, int);
     double variance();
     void kMeansClustering(vector<FlipFlop>&, vector<FlipFlop>&, vector<int>&, int, int);
     double distance(FlipFlop, FlipFlop);
     void readData(Board&);
     void kmeans(Board&);
-    static bool compareFlipFlop(FlipFlop&,  FlipFlop&);
+    static bool compareFlipFlop(FlipFlop&, FlipFlop&);
     void findOptimalGrouping(vector<FlipFlop>&, Board&);
     void updateFlipFlop(FlipFlop, FlipFlop, Board&);
     void updateBankedFlipFlop(vector<FlipFlop>, FlipFlop, Board&);
