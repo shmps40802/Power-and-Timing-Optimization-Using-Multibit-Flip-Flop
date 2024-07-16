@@ -46,7 +46,7 @@ private:
 public:
     Board();
 	~Board();
-    void ReadFile();                                            // read file
+	void ReadFile();                                            // read file
 	void Display();
 	Point NametoPoint(string);
 	void Banking(vector<vector<FlipFlop>>, vector<FlipFlop>);   // only banking 1 bit
@@ -62,7 +62,7 @@ public:
 	float PowerCost();
 	float AreaCost();
 	float BinCost(); // on grid point
-    float Cost();
+	float Cost();
 	float getInstsize();
 };
 #endif
