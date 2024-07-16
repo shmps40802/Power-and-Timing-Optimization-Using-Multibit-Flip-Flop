@@ -12,36 +12,46 @@ using namespace std;
 class Cluster {
 private:
     int n;
-    int k; //分成k個cluster
-    int l; //每個cluster再分成l個cluster
-    int epochs; //將point分堆的迭代次數
+    int k; //divide into k clusters
+    int l;  //every cluster divide into l clusters
+    int epochs; //number of iterations to choose points' cluster
     int maxBits;
     double MinVariance;
-    double Max; // max dimension of board
-    struct Point {
-        double x, y;
-        int cluster;
-        Point() : x(0), y(0), cluster(-1) {}
-        Point(double x, double y, int cluster = -1) : x(x), y(y), cluster(cluster) {}
+    double Max; //max dimension of board
+    int p; //from p banking solutions, choose the best one
+    int q; //tries of banking in cluster
+    /*struct Point {
+        int x, y; //flip flop coordinate
+        int N; // n bit(s)
+        int width, height; //flip flop weight, height
+        int cluster; // the cluster it belongs to
+        string name; //Flip Flop name
+        Point(int x = 0, int y = 0, int N = 0, int width = 0, int height = 0, string name = "", int cluster = -1) : x(x), y(y), N(N), width(width), height(height), cluster(cluster), name(name) {};
         double distance(Point p) {
             return abs(x - p.x) + abs(y - p.y);
         }
-    };
-    vector<Point> DataPoints; //所有flip flop的代表點
-    vector<vector<Point>> KClusters; //總共k個cluster，每個cluster裡包含的points
-    vector<vector<vector<Point>>> KLClusters; //總共k個cluster，每個cluster再分成l個cluster，每個cluster裡包含的points
-    vector<Point> centroids; //cluster質心座標
-    vector<vector<Point>> KCentroids; //總共k個cluster，每個cluster再分成l個cluster，每個cluster的質心
-    vector<int> counts; //cluster中的points數量
-    vector<vector<int>> KCounts; //總共k個cluster，每個cluster再分成l個cluster，每個cluster的points數量
+    };*/
+    vector<FlipFlop> DataPoints; //represent point of all flip flops
+    vector<vector<FlipFlop>> KClusters; //k clusters in total, and the points contained in each clusteerr
+    vector<vector<vector<FlipFlop>>> KLClusters; //k clusters in total, each cluster is divided into l clusters, and the points contained in each cluster
+    vector<FlipFlop> centroids; //centroid of each cluster
+    vector<vector<FlipFlop>> KCentroids; //k clusters in total, each cluster is divided into l clusters, and the centroid of each cluster
+    vector<int> counts; //number of points in each cluster
+    vector<vector<int>> KCounts; //k clusters in total, each cluster is divided into l clusters, and the number of points in each cluster
+    vector<FlipFlop> FlipFlopLib; //create FlipFlop library
+    vector<int> availableBits; //available bits in FlipFlopLib
 public:
     Cluster();
     Cluster(int, int, int, int, int, double, double);
     void initializeVector(int, int);
     double variance();
-    void kMeansClustering(vector<Point>&, vector<Point>&, vector<int>&, int, int);
+    void kMeansClustering(vector<FlipFlop>&, vector<FlipFlop>&, vector<int>&, int, int);
+    double distance(FlipFlop, FlipFlop);
     void readData(Board&);
     void kmeans(Board&);
+    static bool compareFlipFlop(FlipFlop&,  FlipFlop&);
+    void findOptimalGrouping(vector<FlipFlop>&, Board&);
+    void updateFlipFlop(FlipFlop, FlipFlop, Board&);
+    void updateBankedFlipFlop(vector<FlipFlop>, FlipFlop, Board&);
 };
-
-#endif#pragma once
+#endif
