@@ -46,13 +46,15 @@ private:
 public:
     Board();
 	~Board();
-	void ReadFile();                                            // read file
+	void ReadFile();                                             // read file
 	void Display();
 	Point NametoPoint(string);
-	void Banking(vector<vector<FlipFlop>>, vector<FlipFlop>);   // only banking 1 bit
-	void Debanking(vector<FlipFlop>, vector<vector<FlipFlop>>);                       // only debanking into 1 bit
-	void Ddfs(string, map<string, bool>&, float&, float&, int, int, bool&);
-	void Qdfs(string, map<string, bool>&, float&, float&, int, int);
+	void updateDSlack(string, float&, int, int);
+	void updateQSlack(string, map<string, bool>&, float, int, int);
+	void Banking(vector<vector<FlipFlop>>, vector<FlipFlop>);    // only banking 1 bit
+	void Debanking(vector<FlipFlop>, vector<vector<FlipFlop>>);  // only debanking into 1 bit
+	void Ddfs(string, float&, int, int);
+	void Qdfs(string, map<string, bool>&, float, float&, int, int);
 	float bankingCompare(vector<FlipFlop>, FlipFlop);
 	float singleCompare(FlipFlop, FlipFlop);
 	bool Check(int, int);
