@@ -1,22 +1,13 @@
 #ifndef BOARD_H
 #define BOARD_H
 #include <vector>
-#include <map>
-#include <list>
 #include <set>
 #include <map>
 #include <unordered_map>
 #include "Cell.h"
 #include "FlipFlop.h"
 #include "Gate.h"
-struct row{
-	int col;
-	string name;
-	row(int col, string name) {
-		this->col = col;
-		this->name = name;
-	}
-};
+
 class Board{
 private:
 	friend class Cluster;
@@ -47,20 +38,19 @@ private:
 	map<string, Gate> InstToGate;                    // inst name to Gate
 	map<string, set<string>> Net;                    // net connection
 	map<string, string> PointToNet;                  // point name to net name C1/D -> N1
-	map<int, list<row>> Location;                    // location of FlipFlop
+	map<int, map<int,string>> Location;              // location of FlipFlop
 	map<pair<int, int>, vector<int>> PlacementRows;  // grid point info
 	set<string> NewFlipFlop;                         // initial FlipFlop
 	map<string, string> PrevToCur;                   // previous pin to current pin
-	map<string, string> CurToPrev;                   // current pin to previous pin
 	map<int, map<int, float>> BinDensity;            // bin density of board
 public:
     Board();
 	~Board();
-	void ReadFile();                                                     // read file
+    void ReadFile();                                            // read file
 	void Display();
 	Point NametoPoint(string);
-	void Banking(vector<vector<FlipFlop>>, vector<Point>, vector<int>);  // only banking 1 bit
-	vector<FlipFlop> Debanking(FlipFlop);                                // only debanking into 1 bit
+	void Banking(vector<vector<FlipFlop>>, vector<FlipFlop>);   // only banking 1 bit
+	void Debanking(vector<FlipFlop>, vector<vector<FlipFlop>>);                       // only debanking into 1 bit
 	void Ddfs(string, map<string, bool>&, float&, float&, int, int, bool&);
 	void Qdfs(string, map<string, bool>&, float&, float&, int, int);
 	float bankingCompare(vector<FlipFlop>, FlipFlop);
@@ -72,6 +62,7 @@ public:
 	float PowerCost();
 	float AreaCost();
 	float BinCost(); // on grid point
-	float Cost();
+    float Cost();
+	float getInstsize();
 };
 #endif
