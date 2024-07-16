@@ -219,7 +219,7 @@ void Board::ReadFile() {
 		fin >> Str >> InstName >> name >> slack;
 		InstToFlipFlop[InstName].setSlack(name, slack);
 	}
-	int power;
+	float power;
 	for (auto &it : FlipFlopLib) {
 		fin >> Str >> name >> power;
 		FlipFlopLib[name].setPower(power);
