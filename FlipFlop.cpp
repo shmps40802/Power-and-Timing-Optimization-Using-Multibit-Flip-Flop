@@ -36,3 +36,9 @@ void FlipFlop::setSlack(string PinName, float slack){
 map<string, float> FlipFlop::getSlack(void) {
     return slack;
 }
+void FlipFlop::setCluster(int x) {
+	cluster = x;
+}
+int FlipFlop::getCluster(void) {
+	return cluster;
+}
