@@ -4,15 +4,11 @@ Cell::Cell(){
     Width = 0;
     Height = 0;
     PinCounts = 0;
-    this->x = 0;
-    this->y = 0;
 }
 Cell::Cell(int w, int h, int p) {
     Width = w;
     Height = h;
     PinCounts = p;
-    this->x = x;
-    this->y = y;
 }
 void Cell::setPos(int x, int y) {
     this->x = x;
