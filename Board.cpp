@@ -362,14 +362,14 @@ void Board::Debanking(vector<FlipFlop> F1, vector<vector<FlipFlop>> F2) {
 					break;
 				}
 			}
-			// delete cell from location
+			// add cell to location
 			int fx = F2[i][j].getX();
 			int fy = F2[i][j].getY();
 			Location[fx][fy] = FlipFlopName;
 		}
 		Location[F1[i].getX()].erase(F1[i].getY());
 	}
-}   // no location
+}
 void Board::Ddfs(string PinName, map<string, bool> &visited, float &WL, float &NS, int x, int y, bool &t) {
 	visited[PinName] = true;
 	if(t)return;
