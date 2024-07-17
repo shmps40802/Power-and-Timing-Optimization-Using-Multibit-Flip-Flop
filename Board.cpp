@@ -315,9 +315,11 @@ void Board::Banking(vector<vector<FlipFlop>> F1, vector<FlipFlop> F2) {
 		CellNumber++;
 		NewFlipFlop.insert(FlipFlopName);
 		F2[i].setCellName(FlipFlopName);
+		F2[i].setbdb(1);
 		vector<Point> curPin = F2[i].getPin();
 		for(int j = 0; j < F1[i].size(); j++) {
 			F2[i].getbank().push_back(F1[i][j]);
+			
 			vector<Point> PrevPin = F1[i][j].getPin();
 			// add new flipflop
 			if(NewFlipFlop.find(F1[i][j].getInstName()) != NewFlipFlop.end()) {
@@ -380,6 +382,7 @@ void Board::Debanking(vector<FlipFlop> F1, vector<vector<FlipFlop>> F2) {
 		vector<Point> PrevPin = F1[i].getPin();
 		for(int j = 0; j < F2[i].size(); j++) {
 			F2[i][j].getdebank().push_back(F1[i]);
+                        F2[i][j].setbdb(1);
 			string FlipFlopName = "C" + CellNumber;
 			CellNumber++;
 			NewFlipFlop.insert(FlipFlopName);
