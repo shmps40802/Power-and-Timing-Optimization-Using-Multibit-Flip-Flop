@@ -12,6 +12,7 @@ private:
 	int cluster;               // the cluster it belongs to
 	vector<FlipFlop> Bank;     //banking from
 	vector<FlipFlop> DeBank;   //debanking from
+        bool BDB;
 public:
 	FlipFlop();
 	FlipFlop(int, int, int, int, vector<Point>);  // N width height P Pin
@@ -27,5 +28,7 @@ public:
 	int getCluster(void);
 	vector<FlipFlop> getbank();
 	vector<FlipFlop> getdebank();
+        void setbdb(bool);
+	bool getbdb();
 };
 #endif
