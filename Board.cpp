@@ -3,9 +3,6 @@
 #include <fstream>
 #include <string>
 #include <algorithm>
-int Abs(int n) {
-	return n > 0 ? n : -n;
-}
 bool ffComp(pair<string, FlipFlop> p1, pair<string, FlipFlop> p2) {
 	return p1.second.getN() > p2.second.getN();
 }
@@ -229,11 +226,20 @@ void Board::ReadFile() {
 void Board::Display() {
 	ofstream fout;
 	fout.open("output.txt");
-	/*cout << FlipFlopLib.size() << "\n";
+	string c1 = "C62610", c2 = "C62611";
+	vector<FlipFlop> F1;
+	F1.push_back(InstToFlipFlop[c1]);
+	F1.push_back(InstToFlipFlop[c2]);
 	for(auto &it : FlipFlopLib) {
-		cout << it.first << "\n";
-		it.second.display();
-	}*/
+		FlipFlop F2 = it.second;
+		if(F2.getN() == 2) {
+			F2.setPos(F1[0].getX(), F1[0].getY());
+			if(bankingCompare(F1, F2) < 0){
+				Banking(vector<vector<FlipFlop>>{F1}, vector<FlipFlop> {F2});
+				break;
+			}
+		}
+	}
 	fout.close();
 }
 Point Board::NametoPoint(string PinName) {
@@ -658,8 +664,8 @@ bool Board::Check(int x, int y) {
 	}
 	return true;
 }
-int Board::ManhattanDist(Point P1, Point P2) {
-	return Abs(P1.x - P2.x) + Abs(P1.y - P2.y);
+int Board::dist(Point P1, Point P2) {
+	return abs(P1.x - P2.x) + abs(P1.y - P2.y);
 }
 float Board::TNSCost() {
 	float sum = 0;
