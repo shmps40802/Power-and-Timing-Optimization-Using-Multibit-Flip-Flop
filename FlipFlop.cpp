@@ -48,3 +48,9 @@ vector<FlipFlop> FlipFlop::getbank() {
 vector<FlipFlop> FlipFlop::getdebank() {
 	return this->DeBank;
 }
+void FlipFlop::setbdb(bool i) {
+	this->BDB = i;
+}
+bool FlipFlop::getbdb() {
+	return this->BDB;
+}
