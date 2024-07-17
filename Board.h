@@ -54,11 +54,11 @@ public:
 	void Banking(vector<vector<FlipFlop>>, vector<FlipFlop>);    // only banking 1 bit
 	void Debanking(vector<FlipFlop>, vector<vector<FlipFlop>>);  // only debanking into 1 bit
 	void Ddfs(string, float&, int, int);
-	void Qdfs(string, map<string, bool>&, float, float&, int, int);
+	void Qdfs(string, map<string, bool>&, int, float&, int, int);
 	float bankingCompare(vector<FlipFlop>, FlipFlop);
 	float singleCompare(FlipFlop, FlipFlop);
 	bool Check(int, int);
-	int ManhattanDist(Point, Point);
+	int dist(Point, Point);
 	// cost function
 	float TNSCost();
 	float PowerCost();
