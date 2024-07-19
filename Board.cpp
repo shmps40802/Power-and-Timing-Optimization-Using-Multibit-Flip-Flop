@@ -670,6 +670,7 @@ float Board::bankingCompare(vector<FlipFlop> prev, FlipFlop cur) {
 				int fx = cur.getX() + curPin[d].x;
 				int fy = cur.getY() + curPin[d].y;
 				Ddfs(PinName, NS, fx, fy);
+				d++;
 				NSComp += NS;
 			}
 			else if(p.type == 'Q') {
@@ -683,6 +684,7 @@ float Board::bankingCompare(vector<FlipFlop> prev, FlipFlop cur) {
 				int fx = cur.getX() + curPin[q].x;
 				int fy = cur.getY() + curPin[q].y;
 				Qdfs(PinName, visited, WL, NS, fx, fy);
+				q++;
 				NSComp += NS;
 			}
 		}
@@ -714,6 +716,7 @@ float Board::singleCompare(FlipFlop prev, FlipFlop cur) {
 			int fx = cur.getX() + curPin[d].x;
 			int fy = cur.getY() + curPin[d].y;
 			Ddfs(PinName, NS, fx, fy);
+			d++;
 			NSComp += NS;
 		}
 		else if(p.type == 'Q') {
@@ -726,6 +729,7 @@ float Board::singleCompare(FlipFlop prev, FlipFlop cur) {
 			int fx = cur.getX() + curPin[q].x;
 			int fy = cur.getY() + curPin[q].y;
 			Qdfs(PinName, visited, WL, NS, fx, fy);
+			q++;
 			NSComp += NS;
 		}
 	}
