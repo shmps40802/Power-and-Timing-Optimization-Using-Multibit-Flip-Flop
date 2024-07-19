@@ -27,9 +27,13 @@ int FlipFlop::getQpinDelay(void) {
 	return QpinDelay;
 }
 void FlipFlop::display(void) {
+	cout << getInstName() << " " << getX() << " " << getY() << "\n";
 	cout << getCellName() << " " << N << " " << getWidth() << " " << getHeight() << " " << getPinCount() << "\n";
-	for (auto &p : getPin()) {
+	for(auto &p : getPin()) {
 		cout << "Pin " <<p .name << " " << p.x << " " << p.y << "\n";
+	}
+	for(auto &s : slack) {
+		cout << s.first << " " << s.second << "\n";
 	}
 }
 void FlipFlop::setSlack(string PinName, float slack){
