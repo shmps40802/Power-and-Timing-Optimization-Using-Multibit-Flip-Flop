@@ -8,20 +8,15 @@
 #include "FlipFlop.h"
 #include "Gate.h"
 
-struct node{
-	char type;  // start, end point
-	int index;  // x, y coordinate
-	int num;    // cell number
-	node():type('e'), index(INT_MAX), num(-1){}
-	node(char type, int index, int num):
-		type(type),index(index), num(num) {}
+struct node {
+	int s;
+	int e;
+	int index;
+	node() : s(INT_MAX), e(0), index(-1) {}
+	node(int s, int e, int index) : s(s), e(e), index(index) {}
 	bool operator<(node n) const {
-		if(this->type == n.type) {
-			return this->index < n.index;
-		}
-		else {
-			return this->type == 's';
-		}
+		if(s != n.s)return s < n.s;
+		else return e < n.e;
 	}
 };
 class Board {
