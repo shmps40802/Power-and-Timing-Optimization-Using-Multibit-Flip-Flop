@@ -9,7 +9,6 @@ FlipFlop::FlipFlop(int N, int width, int height, int P, vector<Point> pin)
 : Cell(width, height, P) {
 	this->N = N;
 	setPin(pin);
-	this->BDB = 0;
 }
 int FlipFlop::getN(void){
 	return N;
