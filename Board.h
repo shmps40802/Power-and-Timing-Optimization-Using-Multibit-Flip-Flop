@@ -8,7 +8,7 @@
 #include "FlipFlop.h"
 #include "Gate.h"
 
-class Board{
+class Board {
 private:
 	friend class Cluster;
 	int Alpha;
@@ -38,16 +38,17 @@ private:
 	map<string, Gate> InstToGate;                    // inst name to Gate
 	map<string, set<string>> Net;                    // net connection
 	map<string, string> PointToNet;                  // point name to net name C1/D -> N1
-	map<int, map<int,vector<string>>> Location;      // location of FlipFlop
+	map<int, map<int, vector<string>>> Location;      // location of FlipFlop
 	map<pair<int, int>, vector<int>> PlacementRows;  // grid point info
 	set<string> NewFlipFlop;                         // initial FlipFlop
 	map<string, string> PrevToCur;                   // previous pin to current pin
 	map<int, map<int, float>> BinDensity;            // bin density of board
 public:
-    Board();
+	Board();
 	~Board();
 	void ReadFile();                                             // read file
 	void Display();
+	void Plot();
 	Point NametoPoint(string);
 	void Ddfs(string, float&, int, int);
 	void Qdfs(string, map<string, bool>&, int, float&, int, int);
