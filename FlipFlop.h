@@ -10,9 +10,7 @@ private:
 	float GatePower;           // power of flipflop
 	map<string, float> slack;  // slack of flipflop
 	int cluster;               // the cluster it belongs to
-	vector<FlipFlop> Bank;     //banking from
-	vector<FlipFlop> DeBank;   //debanking from
-        bool BDB;
+	
 public:
 	FlipFlop();
 	FlipFlop(int, int, int, int, vector<Point>);  // N width height P Pin
@@ -26,9 +24,6 @@ public:
     	map<string, float> getSlack(void);
 	void setCluster(int);
 	int getCluster(void);
-	vector<FlipFlop> getbank();
-	vector<FlipFlop> getdebank();
-        void setbdb(bool);
-	bool getbdb();
+	
 };
 #endif
