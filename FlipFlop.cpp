@@ -3,7 +3,7 @@
 using namespace std;
 FlipFlop::FlipFlop() : Cell(0, 0, 0) {
 	this->N = 0;
-	this->BDB = 0;
+
 }
 FlipFlop::FlipFlop(int N, int width, int height, int P, vector<Point> pin) 
 : Cell(width, height, P) {
@@ -48,15 +48,4 @@ void FlipFlop::setCluster(int x) {
 int FlipFlop::getCluster(void) {
 	return cluster;
 }
-vector<FlipFlop> FlipFlop::getbank() {
-	return this->Bank;
-}
-vector<FlipFlop> FlipFlop::getdebank() {
-	return this->DeBank;
-}
-void FlipFlop::setbdb(bool i) {
-	this->BDB = i;
-}
-bool FlipFlop::getbdb() {
-	return this->BDB;
-}
+
