@@ -5,7 +5,7 @@
 using namespace std;
 struct Point {
 	string name;     // name of point
-    char type;       // D, Q, Clk, I, O
+	char type;       // D, Q, Clk, I, O
 	int x;           // x coordinate of point
 	int y;           // y coordinate of point
 	Point(int x, int y, string name) {
