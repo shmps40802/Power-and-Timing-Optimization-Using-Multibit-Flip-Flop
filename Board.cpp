@@ -8,7 +8,7 @@ using namespace std;
 bool ffComp(pair<string, FlipFlop> p1, pair<string, FlipFlop> p2) {
 	return p1.second.getN() > p2.second.getN();
 }
-void merge(vector<node> &arr, int front, int mid, int end) {
+void merge(vector<node>& arr, int front, int mid, int end) {
 	vector<node> left(arr.begin() + front, arr.begin() + mid + 1);
 	vector<node> right(arr.begin() + mid + 1, arr.begin() + end + 1);
 	left.insert(left.end(), node('e', INT_MAX, -1));
@@ -25,7 +25,7 @@ void merge(vector<node> &arr, int front, int mid, int end) {
 		}
 	}
 }
-void mergeSort(vector<node> &arr, int front, int end) {
+void mergeSort(vector<node>& arr, int front, int end) {
 	if(front < end) {
 		int mid = (front + end) / 2;
 		mergeSort(arr, front, mid);
@@ -701,53 +701,57 @@ float Board::singleCompare(FlipFlop prev, FlipFlop cur) {
 }
 bool Board::Check() {
 	// not on grid point
-	/*for(auto &it : InstToFlipFlop) {
+	for (auto& it : InstToFlipFlop) {
 		int x = it.second.getX();
 		int y = it.second.getY();
-		for(auto &p : PlacementRows){
-			if(y == p.first.second) {
+		for (auto& p : PlacementRows){
+			if (y == p.first.second) {
 				int sx = p.first.first;
-				if(sx > x || ((x - sx) % p.second[0])){
+				if (sx > x || ((x - sx) % p.second[0])
+					|| (x - sx) / p.second[0] > p.second[2]) {
+					cout << "x of " << it.first << " not on grid point\n";
+					it.second.display();
 					return false;
 				}
-				else {
-					int n = (x - sx) / p.second[0];
-					if(n > p.second[2])return false;
-				}
 			}
-			else return false;
+			else {
+				cout << "y of " << it.first << " not on grid point\n";
+				it.second.display();
+				return false;
+			}
 		}
-	}*/
+	}
 	// overlap
 	vector<node> X;
-	vector<node> Y;
-	for (auto &it : Location) {
-		for (auto &arr : it.second) {
+	for (auto& it : Location) {
+		for (auto& arr : it.second) {
 			int x = it.first;
 			int y = arr.first;
-			for (auto &c : arr.second) {
+			for (auto& c : arr.second) {
 				Cell F = getCell(c);
-				cout << F.getCellName() << "\n";
 				int num = stoi(F.getCellName().substr(1));
-				X.push_back(node('s', F.getX(), num));
-				X.push_back(node('e', F.getRight(), num));
-				Y.push_back(node('s', F.getY(), num));
-				Y.push_back(node('e', F.getTop(), num));
+				X.push_back(node(F.getX(), F.getRight(), num));
 			}
 		}
 	}
 	int n = (int) X.size();
 	mergeSort(X, 0, n - 1);
-	mergeSort(Y, 0, n - 1);
-	ofstream fout;
-	fout.open("output.txt");
-	for (auto &it : X) {
-		fout << it.type << it.index << "\n";
+	vector<int> S;
+	for (int i = 0; i < n - 1; i++) {
+		for (int j = i + 1; j < n; j++) {
+			if (X[i].e > X[j].s) {
+				string s1 = "C" + to_string(X[i].index);
+				string s2 = "C" + to_string(X[j].index);
+				Cell C1 = getCell(s1);
+				Cell C2 = getCell(s2);
+				if (C1.getTop() > C2.getY()) {
+					cout << s1 << " overlapped with " << s2 << "\n";
+					return false;
+				}
+			}
+			else break;
+		}
 	}
-	for (auto &it : Y) {
-		fout << it.type << it.index << "\n";
-	}
-	fout.close();
 	return true;
 }
 int Board::dist(Point P1, Point P2) {
