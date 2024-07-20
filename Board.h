@@ -66,6 +66,6 @@ public:
 	float AreaCost();
 	float BinCost(); // on grid point
 	float Cost();
-	float getInstsize();
+	int getInstsize();
 };
 #endif
