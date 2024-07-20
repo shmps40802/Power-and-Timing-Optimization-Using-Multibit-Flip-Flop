@@ -869,6 +869,6 @@ float Board::Cost() {
 	sum += Alpha * TNSCost() + Beta * PowerCost() + Gemma * AreaCost() + Delta * BinCost();
 	return sum;
 }
-float Board::getInstsize() {
+int Board::getInstsize() {
 	return InstToFlipFlop.size();
 }
