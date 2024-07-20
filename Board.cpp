@@ -865,7 +865,7 @@ float Board::BinCost() {
 	return sum;
 }
 float Board::Cost() {
-	int sum = 0;
+	float sum = 0;
 	sum += Alpha * TNSCost() + Beta * PowerCost() + Gemma * AreaCost() + Delta * BinCost();
 	return sum;
 }
