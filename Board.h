@@ -8,7 +8,23 @@
 #include "FlipFlop.h"
 #include "Gate.h"
 
-class Board {
+struct node{
+	char type;  // start, end point
+	int index;  // x, y coordinate
+	int num;    // cell number
+	node():type('e'), index(INT_MAX), num(-1){}
+	node(char type, int index, int num):
+		type(type),index(index), num(num) {}
+	bool operator<(node n) const {
+		if(this->type == n.type) {
+			return this->index < n.index;
+		}
+		else {
+			return this->type == 's';
+		}
+	}
+};
+class Board{
 private:
 	friend class Cluster;
 	int Alpha;
@@ -38,7 +54,7 @@ private:
 	map<string, Gate> InstToGate;                    // inst name to Gate
 	map<string, set<string>> Net;                    // net connection
 	map<string, string> PointToNet;                  // point name to net name C1/D -> N1
-	map<int, map<int, vector<string>>> Location;      // location of FlipFlop
+	map<int, map<int,vector<string>>> Location;      // location of FlipFlop
 	map<pair<int, int>, vector<int>> PlacementRows;  // grid point info
 	set<string> NewFlipFlop;                         // initial FlipFlop
 	map<string, string> PrevToCur;                   // previous pin to current pin
@@ -50,15 +66,16 @@ public:
 	void Display();
 	void Plot();
 	Point NametoPoint(string);
-	void Ddfs(string, float&, int, int);
+	Cell getCell(string);                                        // get FlipFlop Gate
+	void Ddfs(string, float&, int, int);                         // 
 	void Qdfs(string, map<string, bool>&, int, float&, int, int);
 	void updateDSlack(string, float&, int, int);
 	void updateQSlack(string, map<string, bool>&, float, int, int);
-	void Banking(vector<vector<FlipFlop>>, vector<FlipFlop>&);    // only banking 1 bit
+	void Banking(vector<vector<FlipFlop>>, vector<FlipFlop>&);   // only banking 1 bit
 	void Debanking(vector<FlipFlop>, vector<vector<FlipFlop>>);  // only debanking into 1 bit
 	float bankingCompare(vector<FlipFlop>, FlipFlop);
 	float singleCompare(FlipFlop, FlipFlop);
-	bool Check(int, int);
+	bool Check();
 	int dist(Point, Point);
 	// cost function
 	float TNSCost();
