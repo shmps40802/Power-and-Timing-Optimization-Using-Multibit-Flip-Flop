@@ -141,12 +141,18 @@ void Board::ReadFile() {
 		string PinName;
 		fin >> Str >> name >> n;
 		set<string> tmp;
+		vector<string> tmp2;
 		for (int j = 0; j < n; j++) {
 			fin >> Str >> PinName;
 			tmp.insert(PinName);
 			PointToNet[PinName] = name;
+			if (PinName.find("CLK") != string::npos) {
+				size_t pos = PinName.find("/");
+				tmp2.push_back(PinName.substr(0, pos));
+			}
 		}
 		Net[name] = tmp;
+		if(!tmp2.empty())FlipFlopByClk.push_back(tmp2);
 	}
 	fin >> Str >> BinWidth;
 	fin >> Str >> BinHeight;
@@ -200,7 +206,14 @@ void Board::Display() {
 	}*/
 	ofstream fout;
 	fout.open("output.txt");
+	/*unsigned sum = 0;
+	for (size_t i = 0; i < FlipFlopByClk.size(); i++) {
+		fout << FlipFlopByClk[i].size() << "\n";
+		sum += FlipFlopByClk[i].size();
+	}
+	fout << "sum = " << sum << "\n";*/
 	fout.close();
+	cout << "outputfile completed\n";
 }
 void Board::Plot() {
 	ofstream outFile;
@@ -745,9 +758,6 @@ bool Board::Check() {
 	}
 	int n = (int) arr.size();
 	mergeSort(arr, 0, n - 1);
-	for (auto& it : arr){
-		//cout << it.first.s << " " << it.first.e << " " << it.second.s << " " << it.second.e << "\n";
-	}
 	for (int i = 0; i < n - 1; i++) {
 		for(int j = i + 1; j < n; j++) {
 			if (arr[i].ex > arr[j].sx) {
@@ -799,16 +809,16 @@ float Board::BinCost() {
 	for(auto& it : InstToFlipFlop){
 		int fx = it.second.getX();
 		int fy = it.second.getY();
-		int fw = it.second.getWidth();
-		int fh = it.second.getHeight();
-		for (int i = fx / BinWidth * BinWidth; i < fx + fw; i += BinWidth) {
+		int fr = it.second.getRight();
+		int ft = it.second.getTop();
+		for (int i = fx / BinWidth * BinWidth; i < fr; i += BinWidth) {
 			int w;
-			if (i + BinWidth > fx + fw)w = fx + fw - i;
+			if (i + BinWidth > fr)w = fr - i;
 			else if (i >= fx)w = BinWidth;
 			else w = i - fx;
-			for (int j = fy / BinHeight * BinHeight; j < fy + fh; j += BinHeight) {
+			for (int j = fy / BinHeight * BinHeight; j < ft; j += BinHeight) {
 				int h;
-				if (j + BinHeight > fy + fh)h = fy + fh - j;
+				if (j + BinHeight > ft)h = ft - j;
 				else if (j >= fy)w = BinHeight;
 				else h = j - fy;
 				BinDensity[i][j] += (float) w * h;
@@ -818,16 +828,16 @@ float Board::BinCost() {
 	for (auto &it : InstToGate) {
 		int gx = it.second.getX();
 		int gy = it.second.getY();
-		int gw = it.second.getWidth();
-		int gh = it.second.getHeight();
-		for (int i = gx / BinWidth * BinWidth; i < gx + gw; i += BinWidth) {
+		int gr = it.second.getRight();
+		int gt = it.second.getTop();
+		for (int i = gx / BinWidth * BinWidth; i < gr; i += BinWidth) {
 			int w;
-			if (i + BinWidth > gx + gw)w = gx + gw - i;
+			if (i + BinWidth > gr)w = gr - i;
 			else if (i > gx)w = BinWidth;
 			else w = i - gx;
-			for (int j = gy / BinHeight * BinHeight; j < gy + gh; j += BinHeight) {
+			for (int j = gy / BinHeight * BinHeight; j < gt; j += BinHeight) {
 				int h;
-				if (j + BinHeight > gy + gh)h = gy + gh - j;
+				if (j + BinHeight > gt)h = gt - j;
 				else if (j > gy)w = BinHeight;
 				else h = j - gy;
 				BinDensity[i][j] += (float) w * h;
@@ -838,7 +848,6 @@ float Board::BinCost() {
 		for (auto& d : it.second) {
 			d.second /= (float) (BinWidth * BinHeight / 100);
 			if (d.second >= BinMaxUtil) sum += 1;
-			//sum = sum;
 		}
 	}
 	return sum;
