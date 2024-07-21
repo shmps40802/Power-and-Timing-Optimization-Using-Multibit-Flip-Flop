@@ -310,9 +310,30 @@ void Cluster::findOptimalGrouping(vector<FlipFlop>& points, Board& board) {
 }
 void Cluster::updateFlipFlop(FlipFlop before, FlipFlop after, Board& board) {
 	//update flip flop from before to after
+	if (before.getCellName() == after.getCellName()) {
+		return;
+	}
+	vector<FlipFlop> bef;
+	bef.push_back(before);
+	vector<vector<FlipFlop>> vectorBef;
+	vectorBef.push_back(bef);
+	vector<FlipFlop> aft;
+	aft.push_back(after);
+	cout << "updateFlipFlop   " << before.getInstName() << "  " << before.getCellName() << " -> " << after.getCellName() << "  ";
+	board.Banking(vectorBef, aft);
 }
 void Cluster::updateBankedFlipFlop(vector<FlipFlop>, FlipFlop, Board&) {
 	//update banked flip flop
+	vector<vector<FlipFlop>> vectorBef;
+	vectorBef.push_back(before);
+	vector<FlipFlop> aft;
+	aft.push_back(after);
+	cout << "updateBankedFlipFlop   ";
+	for (auto it : before) {
+		cout << it.getInstName() << "  " << it.getCellName() << ", ";
+	}
+	cout << " -> " << after.getCellName() << "  ";
+	board.Banking(vectorBef, aft);
 }
 bool Cluster::compareFlipFlop(FlipFlop& lhs, FlipFlop& rhs) {
 	if (lhs.getN() == rhs.getN()) {
