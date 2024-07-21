@@ -49,9 +49,3 @@ void FlipFlop::setCluster(int x) {
 int FlipFlop::getCluster(void) {
 	return cluster;
 }
-vector<FlipFlop> FlipFlop::getbank() {
-	return this->Bank;
-}
-vector<FlipFlop> FlipFlop::getdebank() {
-	return this->DeBank;
-}
