@@ -3,12 +3,14 @@
 using namespace std;
 FlipFlop::FlipFlop() : Cell(0, 0, 0) {
 	this->N = 0;
-
 }
 FlipFlop::FlipFlop(int N, int width, int height, int P, vector<Point> pin) 
 : Cell(width, height, P) {
 	this->N = N;
 	setPin(pin);
+}
+FlipFlop::~FlipFlop() {
+	
 }
 int FlipFlop::getN(void){
 	return N;
@@ -47,4 +49,9 @@ void FlipFlop::setCluster(int x) {
 int FlipFlop::getCluster(void) {
 	return cluster;
 }
-
+vector<FlipFlop> FlipFlop::getbank() {
+	return this->Bank;
+}
+vector<FlipFlop> FlipFlop::getdebank() {
+	return this->DeBank;
+}
