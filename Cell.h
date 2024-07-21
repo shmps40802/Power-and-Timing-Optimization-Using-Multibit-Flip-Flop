@@ -4,31 +4,32 @@
 #include <string>
 using namespace std;
 struct Point {
-	string name;     // name of point
-	char type;       // D, Q, Clk, I, O
-	int x;           // x coordinate of point
-	int y;           // y coordinate of point
-	Point(int x, int y, string name) {
-		this->name = name;
-		this->x = x;
-		this->y = y;
-	}
-	Point(int x, int y) {
-		this->x = x;
-        	this->y = y;
-	}
-	Point() {
-		this->name = "";
-		this->x = -1;
-		this->y = -1;
-	}
-	bool operator<(Point& p) {
-        	if (x < p.x)return true;
-        	else if (x == p.x) {
-        		return y < p.y;
-        	}
-        	else return false;
-	}
+    string name;     // name of point
+    char type;       // D, Q, Clk, I, O
+    int x;           // x coordinate of point
+    int y;           // y coordinate of point
+    vector<string> sourcename;
+    Point(int x, int y, string name) {
+        this->name = name;
+        this->x = x;
+        this->y = y;
+    }
+    Point(int x, int y) {
+        this->x = x;
+        this->y = y;
+    }
+    Point() {
+        this->name = "";
+        this->x = -1;
+        this->y = -1;
+    }
+    bool operator<(Point& p) {
+        if (x < p.x)return true;
+        else if (x == p.x) {
+            return y < p.y;
+        }
+        else return false;
+    }
 };
 class Cell {
 private:
@@ -40,7 +41,7 @@ private:
     vector<Point> Pin;    // pins in cell
     int x;                // x coordinate of cell
     int y;                // y coordinate of cell
-	float slack;          // slack of output point
+    float slack;          // slack of output point
 public:
     Cell();
     Cell(int, int, int);
@@ -60,5 +61,7 @@ public:
     string getCellName(void);
     int getPinCount(void);
     Point getPoint(string);
+    void setsource(string, string);
+    vector<string> getsource(string);
 };
 #endif
