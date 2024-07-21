@@ -4,19 +4,23 @@
 #include <set>
 #include <map>
 #include <unordered_map>
+#include <time.h>
 #include "Cell.h"
 #include "FlipFlop.h"
 #include "Gate.h"
 
 struct node {
-	int s;
-	int e;
+	int sx;
+	int ex;
+	int sy;
+	int ey;
 	int index;
-	node() : s(INT_MAX), e(0), index(-1) {}
-	node(int s, int e, int index) : s(s), e(e), index(index) {}
+	node() : sx(INT_MAX), ex(0), sy(INT_MAX), ey(0), index(-1) {}
+	node(int sx, int ex, int sy, int ey, int index)
+	: sx(sx), ex(ex), sy(sy), ey(ey), index(index) {}
 	bool operator<(node n) const {
-		if(s != n.s)return s < n.s;
-		else return e < n.e;
+		if(sx != n.sx)return sx < n.sx;
+		else return ex < n.ex;
 	}
 };
 class Board {
@@ -49,7 +53,7 @@ private:
 	map<string, Gate> InstToGate;                    // inst name to Gate
 	map<string, set<string>> Net;                    // net connection
 	map<string, string> PointToNet;                  // point name to net name C1/D -> N1
-	map<int, map<int, vector<string>>> Location;      // location of FlipFlop
+	map<int, map<int, vector<string>>> Location;     // location of FlipFlop
 	map<pair<int, int>, vector<int>> PlacementRows;  // grid point info
 	set<string> NewFlipFlop;                         // initial FlipFlop
 	map<string, string> PrevToCur;                   // previous pin to current pin
@@ -62,7 +66,9 @@ public:
 	void Plot();
 	Point NametoPoint(string);
 	Cell getCell(string);                                        // get FlipFlop Gate
-	void Ddfs(string, float&, int, int);                         // 
+	void addNet(string, string);                                 // add point to net
+	void removeNet(string, string);                              // remove point from net
+	void Ddfs(string, float&, int, int);
 	void Qdfs(string, map<string, bool>&, int, float&, int, int);
 	void updateDSlack(string, float&, int, int);
 	void updateQSlack(string, map<string, bool>&, float, int, int);
