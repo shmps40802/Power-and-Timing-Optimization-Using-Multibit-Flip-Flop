@@ -64,3 +64,20 @@ Point Cell::getPoint(string name) {
     std::cout << "Point name " << name << " in " << CellName << " not be found\n";
     return Point(-1, -1, "");
 }
+void Cell::setsource(string pinname, string source) {
+    for (auto& it : Pin) {
+        if (it.name == pinname) {
+            it.sourcename.push_back(source);
+        }
+    }
+}
+vector<string> Cell::getsource(string pinname) {
+	vector<string> result;
+    for (auto& it : Pin) {
+        if (it.name == pinname) {
+            result = it.sourcename;
+        }
+    }
+	if(result.empty())cout << "Pin " << pinname << " not found\n";
+	return result;
+}
