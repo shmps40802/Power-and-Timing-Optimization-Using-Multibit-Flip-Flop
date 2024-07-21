@@ -8,22 +8,21 @@ private:
 	int N;                     // n bit(s)
 	float QpinDelay;           // delay time of Qpin
 	float GatePower;           // power of flipflop
-	map<string, float> slack;  // slack of flipflop
+	map<string, float> slack;  // name to slack of flipflop
 	int cluster;               // the cluster it belongs to
-	
 public:
 	FlipFlop();
 	FlipFlop(int, int, int, int, vector<Point>);  // N width height P Pin
+	~FlipFlop();
 	int getN(void);                               // get bit number
 	void setPower(float);
 	float getPower(void);
 	void setQpinDelay(float);
 	int getQpinDelay(void);
 	void display(void);
-    	void setSlack(string, float);
-    	map<string, float> getSlack(void);
+	void setSlack(string, float);
+	map<string, float> getSlack(void);
 	void setCluster(int);
 	int getCluster(void);
-	
 };
 #endif
