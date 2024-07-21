@@ -14,8 +14,6 @@ void merge(vector<node>& arr, int front, int mid, int end) {
 	right.insert(right.end(), node());
 	int l = 0, r = 0;
 	for(int i = front; i <= end; i++) {
-		//cout << left[l].s << " " << left[l].e << " " << left[l].index << "\n";
-		//cout << right[r].s << " " << right[r].e << " " << right[r].index << "\n";
 		if(left[l] < right[r]) {
 			arr[i] = left[l];
 			l++;
@@ -200,9 +198,6 @@ void Board::Display() {
 			break;
 		}
 	}*/
-	/*for(auto& it : PlacementRows){
-		cout << it.first.first << " " << it.first.second << "\n"; 
-	}*/
 	ofstream fout;
 	fout.open("output.txt");
 	fout.close();
@@ -291,10 +286,12 @@ Cell Board::getCell(string CellName) {
 	}
 }
 void Board::addNet(string NetName, string PinName) {
-		
+	Net[NetName].insert(PinName);
+	PointToNet[PinName] = NetName;
 }
 void Board::removeNet(string NetName, string PinName) {
-
+	Net[NetName].erase(PinName);
+	PointToNet.erase(PinName);
 }
 void Board::Ddfs(string PinName, float &NS, int x, int y) {
 	string netname = PointToNet[PinName];
@@ -767,7 +764,6 @@ bool Board::Check() {
 			else break;
 		}
 	}
-	cout << "great\n";
 	return true;
 }
 int Board::dist(Point P1, Point P2) {
