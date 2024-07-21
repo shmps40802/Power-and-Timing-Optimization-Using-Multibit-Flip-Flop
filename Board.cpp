@@ -3,7 +3,6 @@
 #include <fstream>
 #include <string>
 #include <algorithm>
-//#include <stdlib.h>
 using namespace std;
 bool ffComp(pair<string, FlipFlop> p1, pair<string, FlipFlop> p2) {
 	return p1.second.getN() > p2.second.getN();
@@ -11,11 +10,13 @@ bool ffComp(pair<string, FlipFlop> p1, pair<string, FlipFlop> p2) {
 void merge(vector<node>& arr, int front, int mid, int end) {
 	vector<node> left(arr.begin() + front, arr.begin() + mid + 1);
 	vector<node> right(arr.begin() + mid + 1, arr.begin() + end + 1);
-	left.insert(left.end(), node('e', INT_MAX, -1));
-	right.insert(right.end(), node('e', INT_MAX, -1));
+	left.insert(left.end(), node());
+	right.insert(right.end(), node());
 	int l = 0, r = 0;
 	for(int i = front; i <= end; i++) {
-		if(left[l] < right[r]){
+		//cout << left[l].s << " " << left[l].e << " " << left[l].index << "\n";
+		//cout << right[r].s << " " << right[r].e << " " << right[r].index << "\n";
+		if(left[l] < right[r]) {
 			arr[i] = left[l];
 			l++;
 		}
@@ -181,7 +182,7 @@ void Board::ReadFile() {
 	fin.close();
 }
 void Board::Display() {
-	string c1 = "C101863", c2 = "C101864";
+	/*string c1 = "C101863", c2 = "C101864";
 	vector<FlipFlop> F1;
 	F1.push_back(InstToFlipFlop[c1]);
 	F1.push_back(InstToFlipFlop[c2]);
@@ -198,7 +199,10 @@ void Board::Display() {
 			Debanking(vector<FlipFlop>{F2}, vector<vector<FlipFlop>>{F1});
 			break;
 		}
-	}
+	}*/
+	/*for(auto& it : PlacementRows){
+		cout << it.first.first << " " << it.first.second << "\n"; 
+	}*/
 	ofstream fout;
 	fout.open("output.txt");
 	fout.close();
@@ -285,6 +289,12 @@ Cell Board::getCell(string CellName) {
 		cout << CellName << " not find\n";
 		return Cell();
 	}
+}
+void Board::addNet(string NetName, string PinName) {
+		
+}
+void Board::removeNet(string NetName, string PinName) {
+
 }
 void Board::Ddfs(string PinName, float &NS, int x, int y) {
 	string netname = PointToNet[PinName];
@@ -441,7 +451,7 @@ void Board::updateQSlack(string PinName, map<string, bool> &visited, float WL, i
 		}  // connect to flipflop
 	}
 }
-void Board::Banking(vector<vector<FlipFlop>> F1, vector<FlipFlop> &F2) {
+void Board::Banking(vector<vector<FlipFlop>> F1, vector<FlipFlop>& F2) {
 	int n = F1.size();
 	for (int i = 0; i < n; i++) {
 		string FlipFlopName = "C" + to_string(CellNumber);
@@ -704,7 +714,7 @@ bool Board::Check() {
 	for (auto& it : InstToFlipFlop) {
 		int x = it.second.getX();
 		int y = it.second.getY();
-		for (auto& p : PlacementRows){
+		for (auto& p : PlacementRows) {
 			if (y == p.first.second) {
 				int sx = p.first.first;
 				if (sx > x || ((x - sx) % p.second[0])
@@ -713,8 +723,9 @@ bool Board::Check() {
 					it.second.display();
 					return false;
 				}
+				break;
 			}
-			else {
+			else if (y < p.first.second) {
 				cout << "y of " << it.first << " not on grid point\n";
 				it.second.display();
 				return false;
@@ -722,36 +733,41 @@ bool Board::Check() {
 		}
 	}
 	// overlap
-	vector<node> X;
+	vector<node> arr;
 	for (auto& it : Location) {
-		for (auto& arr : it.second) {
+		for (auto& r : it.second) {
 			int x = it.first;
-			int y = arr.first;
-			for (auto& c : arr.second) {
+			int y = r.first;
+			for (auto& c : r.second) {
 				Cell F = getCell(c);
-				int num = stoi(F.getCellName().substr(1));
-				X.push_back(node(F.getX(), F.getRight(), num));
+				int num = stoi(c.substr(1));
+				node n(F.getX(), F.getRight(), F.getY(), F.getTop(), num);
+				arr.push_back(n);
 			}
 		}
 	}
-	int n = (int) X.size();
-	mergeSort(X, 0, n - 1);
-	vector<int> S;
+	int n = (int) arr.size();
+	mergeSort(arr, 0, n - 1);
+	for (auto& it : arr){
+		//cout << it.first.s << " " << it.first.e << " " << it.second.s << " " << it.second.e << "\n";
+	}
 	for (int i = 0; i < n - 1; i++) {
-		for (int j = i + 1; j < n; j++) {
-			if (X[i].e > X[j].s) {
-				string s1 = "C" + to_string(X[i].index);
-				string s2 = "C" + to_string(X[j].index);
-				Cell C1 = getCell(s1);
-				Cell C2 = getCell(s2);
-				if (C1.getTop() > C2.getY()) {
+		for(int j = i + 1; j < n; j++) {
+			if (arr[i].ex > arr[j].sx) {
+				if((arr[i].ey > arr[j].sy && arr[i].sy < arr[j].ey)
+				|| (arr[j].ey > arr[i].sy && arr[j].sy < arr[i].ey)) {
+					string s1 = "C" + to_string(arr[i].index);
+					string s2 = "C" + to_string(arr[j].index);
 					cout << s1 << " overlapped with " << s2 << "\n";
+					cout << arr[i].sx << " " << arr[i].ex << " " << arr[i].sy << " " << arr[i].ey << "\n";
+					cout << arr[j].sx << " " << arr[j].ex << " " << arr[j].sy << " " << arr[j].ey << "\n";
 					return false;
 				}
 			}
 			else break;
 		}
 	}
+	cout << "great\n";
 	return true;
 }
 int Board::dist(Point P1, Point P2) {
