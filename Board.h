@@ -51,6 +51,7 @@ private:
 	map<string, Gate> GateLib;                       // name to Gate
 	map<string, FlipFlop> InstToFlipFlop;            // inst name to FlipFlop
 	map<string, Gate> InstToGate;                    // inst name to Gate
+	vector<vector<string>> FlipFlopByClk;            // flipflop(s) with the same clk
 	map<string, set<string>> Net;                    // net connection
 	map<string, string> PointToNet;                  // point name to net name C1/D -> N1
 	map<int, map<int, vector<string>>> Location;     // location of FlipFlop
