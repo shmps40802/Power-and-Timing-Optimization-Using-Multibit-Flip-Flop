@@ -13,22 +13,22 @@ struct Point {
 		this->x = x;
 		this->y = y;
 	}
-    Point(int x, int y) {
-        this->x = x;
-        this->y = y;
-    }
+	Point(int x, int y) {
+		this->x = x;
+        	this->y = y;
+	}
 	Point() {
 		this->name = "";
 		this->x = -1;
 		this->y = -1;
 	}
-    bool operator<(Point& p) {
-        if (x < p.x)return true;
-        else if (x == p.x) {
-            return y < p.y;
-        }
-        else return false;
-    }
+	bool operator<(Point& p) {
+        	if (x < p.x)return true;
+        	else if (x == p.x) {
+        		return y < p.y;
+        	}
+        	else return false;
+	}
 };
 class Cell {
 private:
