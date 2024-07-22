@@ -30,7 +30,7 @@ void Cell::setPin(vector<Point> pin) {
     Pin = pin;
 }
 vector<Point> Cell::getPin(void) {
-    if(Pin.empty())cout << "Pin in Cell "<< InstName << " is empty\n";
+    if (Pin.empty())cout << "Pin in Cell " << InstName << " is empty\n";
     return Pin;
 }
 int Cell::getWidth(void) {
@@ -45,13 +45,13 @@ int Cell::getArea(void) {
 void Cell::setInstName(string name) {
     InstName = name;
 }
-string Cell::getInstName(void) {
+string Cell::getInstName(void) const {
     return InstName;
 }
 void Cell::setCellName(string name) {
     CellName = name;
 }
-string Cell::getCellName(void) {
+string Cell::getCellName(void) const {
     return CellName;
 }
 int Cell::getPinCount(void) {
@@ -59,7 +59,7 @@ int Cell::getPinCount(void) {
 }
 Point Cell::getPoint(string name) {
     for (auto& it : Pin) {
-        if(it.name == name)return it;
+        if (it.name == name)return it;
     }
     std::cout << "Point name " << name << " in " << CellName << " not be found\n";
     return Point(-1, -1, "");
@@ -72,12 +72,12 @@ void Cell::setsource(string pinname, string source) {
     }
 }
 vector<string> Cell::getsource(string pinname) {
-	vector<string> result;
+    vector<string> result;
     for (auto& it : Pin) {
         if (it.name == pinname) {
             result = it.sourcename;
         }
     }
-	if(result.empty())cout << "Pin " << pinname << " not found\n";
-	return result;
+    if (result.empty())cout << "Pin " << pinname << " not found\n";
+    return result;
 }
