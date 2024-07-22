@@ -74,7 +74,7 @@ public:
 	void updateDSlack(string, float&, int, int);
 	void updateQSlack(string, map<string, bool>&, float, int, int);
 	void Banking(vector<vector<FlipFlop>>, vector<FlipFlop>&);   // only banking 1 bit
-	void Debanking(vector<FlipFlop>, vector<vector<FlipFlop>>);  // only debanking into 1 bit
+	void Debanking(vector<FlipFlop>, vector<vector<FlipFlop>>&);  // only debanking into 1 bit
 	float bankingCompare(vector<FlipFlop>, FlipFlop);
 	float singleCompare(FlipFlop, FlipFlop);
 	bool Check();
