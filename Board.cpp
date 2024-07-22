@@ -568,7 +568,7 @@ void Board::Banking(vector<vector<FlipFlop>> F1, vector<FlipFlop>& F2) {
 		InstToFlipFlop[FlipFlopName] = F2[i];
 	}
 }
-void Board::Debanking(vector<FlipFlop> F1, vector<vector<FlipFlop>> F2) {
+void Board::Debanking(vector<FlipFlop> F1, vector<vector<FlipFlop>>& F2) {
 	int n = F1.size();
 	for (int i = 0; i < n; i++) {
 		vector<Point> prevPin = F1[i].getPin();
