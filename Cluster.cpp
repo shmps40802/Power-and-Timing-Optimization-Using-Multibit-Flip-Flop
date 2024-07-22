@@ -322,7 +322,7 @@ void Cluster::updateFlipFlop(FlipFlop before, FlipFlop after, Board& board) {
 	cout << "updateFlipFlop   " << before.getInstName() << "  " << before.getCellName() << " -> " << after.getCellName() << "  ";
 	board.Banking(vectorBef, aft);
 }
-void Cluster::updateBankedFlipFlop(vector<FlipFlop>, FlipFlop, Board&) {
+void Cluster::updateBankedFlipFlop(vector<FlipFlop> before, FlipFlop after, Board& board) {
 	//update banked flip flop
 	vector<vector<FlipFlop>> vectorBef;
 	vectorBef.push_back(before);
