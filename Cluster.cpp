@@ -199,6 +199,7 @@ void Cluster::findOptimalGrouping(vector<FlipFlop>& points, Board& board) {
 	int minBits = *min_it;
 
 	//optimize every Flip Flop in the cluster
+	vector<FlipFlop> updatedPoints;
 	for (const auto& it : points) {
 		FlipFlop before = it;
 		for (auto& it2 : FlipFlopLib) {
@@ -213,13 +214,16 @@ void Cluster::findOptimalGrouping(vector<FlipFlop>& points, Board& board) {
 				break;
 			}
 		}
-		updateFlipFlop(it, before, board);
+		FlipFlop temp = updateFlipFlop(it, before, board);
+		updatedPoints.push_back(temp);
 	}
+	points = updatedPoints;
 
 	vector<vector<pair<vector<FlipFlop>, FlipFlop>>> BankedFlipFlops(p);
 	vector<float> reducedCosts(p, 0.0);
 	for (int i = 0; i < p; i++) { //repeat p times, find the best one
 		//bank some Flip Flop to multibits
+		vector<FlipFlop> points2 = points;
 		for (int j = 0; j < q; j++) {
 			srand(time(0));
 			int bitNum = availableBits.at(rand() % availableBits.size()); //bit number to be banked
@@ -229,8 +233,8 @@ void Cluster::findOptimalGrouping(vector<FlipFlop>& points, Board& board) {
 			vector<FlipFlop> pointsToBank;
 			int num = 0;
 			default_random_engine rng(static_cast<unsigned int>(time(0)));
-			shuffle(points.begin(), points.end(), rng); //Randomly arrange the points to be synthesized
-			for (auto& it : points) { //choose some flip flops total bits = bitNum
+			shuffle(points2.begin(), points2.end(), rng); //Randomly arrange the points to be synthesized
+			for (auto& it : points2) { //choose some flip flops total bits = bitNum
 				if (it.getN() == bitNum) //already banked
 				{
 					continue;
@@ -285,6 +289,9 @@ void Cluster::findOptimalGrouping(vector<FlipFlop>& points, Board& board) {
 							break;
 						}
 					}
+					for (auto& it : pointsToBank) {
+						points2.erase(remove(points2.begin(), points2.end(), it), points2.end());
+					}
 					BankedFlipFlops.at(i).push_back(make_pair(pointsToBank, bankedFlipFlop));
 					//updateBankedFlipFlop(pointsToBank, bankedFlipFlop, board);
 				}
@@ -308,10 +315,10 @@ void Cluster::findOptimalGrouping(vector<FlipFlop>& points, Board& board) {
 		updateBankedFlipFlop(it.first, it.second, board);
 	}
 }
-void Cluster::updateFlipFlop(FlipFlop before, FlipFlop after, Board& board) {
+FlipFlop Cluster::updateFlipFlop(FlipFlop before, FlipFlop after, Board& board) {
 	//update flip flop from before to after
 	if (before.getCellName() == after.getCellName()) {
-		return;
+		return before;
 	}
 	vector<FlipFlop> bef;
 	bef.push_back(before);
@@ -321,6 +328,7 @@ void Cluster::updateFlipFlop(FlipFlop before, FlipFlop after, Board& board) {
 	aft.push_back(after);
 	cout << "updateFlipFlop   " << before.getInstName() << "  " << before.getCellName() << " -> " << after.getCellName() << "  ";
 	board.Banking(vectorBef, aft);
+	return aft.at(0);
 }
 void Cluster::updateBankedFlipFlop(vector<FlipFlop> before, FlipFlop after, Board& board) {
 	//update banked flip flop
