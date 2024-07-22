@@ -24,5 +24,6 @@ public:
 	map<string, float> getSlack(void);
 	void setCluster(int);
 	int getCluster(void);
+	bool operator==(const FlipFlop& other) const;
 };
 #endif
