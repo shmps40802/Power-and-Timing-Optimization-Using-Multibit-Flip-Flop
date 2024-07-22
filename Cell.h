@@ -56,9 +56,9 @@ public:
     int getHeight(void);
     int getArea(void);
     void setInstName(string);
-    string getInstName(void);
+    string getInstName(void) const;
     void setCellName(string);
-    string getCellName(void);
+    string getCellName(void) const;
     int getPinCount(void);
     Point getPoint(string);
     void setsource(string, string);
