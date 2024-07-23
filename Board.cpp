@@ -504,6 +504,9 @@ void Board::Banking(vector<vector<FlipFlop>> F1, vector<FlipFlop>& F2) {
 						d++;
 					}
 					string D = "D" + to_string(dd + w);
+					if (F2[i].getN() == 1) {
+						D = "D";
+					}
 					F2[i].setsource(D, p.sourcename[0]);
 					dd++;  //memory
 					cur = FlipFlopName + "/" + curPin[d].name;
@@ -520,6 +523,9 @@ void Board::Banking(vector<vector<FlipFlop>> F1, vector<FlipFlop>& F2) {
 						q++;
 					}
 					string Q = "Q" + to_string(qq + w);
+					if (F2[i].getN() == 1) {
+						Q = "Q";
+					}
 					F2[i].setsource(Q, p.sourcename[0]);
 					qq++;  //memory
 					cur = FlipFlopName + "/" + curPin[q].name;
