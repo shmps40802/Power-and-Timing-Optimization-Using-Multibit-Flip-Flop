@@ -153,37 +153,37 @@ void Cluster::kmeans(Board& board) {
 		}
 	}
 	//----------------------------------------------------------------------------------------
-	int sum = 0;
-	for (auto& it : KClusters) {
-		sum += it.size();
-	}
-	cout<<"number of Flip Flop in KClusters:  "<<sum<<endl;
-	sum = 0;
-	for (auto& it : KLClusters) {
-		for (auto& it2 : it) {
-			sum += it2.size();
-		}
-	}
-	cout << "number of Flip Flop in KLClusters:  " << sum << endl;
-	map<int, int> cnt;  //flip flop number distribution in cluster
-	sum = 0;
-	for (auto &it : KCounts) {
-		for (auto& it2 : it) {
-			if (cnt.find(it2) == cnt.end()) {
-				cnt.insert({ it2,1 });
-			}
-			else {
-				cnt.at(it2)++;
-			}
-		}
-	}
-	for (auto& it : cnt) {
-		cout << "flip flop numbers: " << it.first << "   counts: " << it.second << endl;
-	}
-	cout << "KLClusters.size()  " << KLClusters.size() << endl;
-	for (int i = 0; i < KLClusters.size(); i++) {
-		cout << "KLClusters[" << i << "].size()  " << KLClusters[i].size() << endl;
-	}
+	//int sum = 0;
+	//for (auto& it : KClusters) {
+	//	sum += it.size();
+	//}
+	//cout<<"number of Flip Flop in KClusters:  "<<sum<<endl;
+	//sum = 0;
+	//for (auto& it : KLClusters) {
+	//	for (auto& it2 : it) {
+	//		sum += it2.size();
+	//	}
+	//}
+	//cout << "number of Flip Flop in KLClusters:  " << sum << endl;
+	//map<int, int> cnt;  //flip flop number distribution in cluster
+	//sum = 0;
+	//for (auto &it : KCounts) {
+	//	for (auto& it2 : it) {
+	//		if (cnt.find(it2) == cnt.end()) {
+	//			cnt.insert({ it2,1 });
+	//		}
+	//		else {
+	//			cnt.at(it2)++;
+	//		}
+	//	}
+	//}
+	//for (auto& it : cnt) {
+	//	cout << "flip flop numbers: " << it.first << "   counts: " << it.second << endl;
+	//}
+	//cout << "KLClusters.size()  " << KLClusters.size() << endl;
+	//for (int i = 0; i < KLClusters.size(); i++) {
+	//	cout << "KLClusters[" << i << "].size()  " << KLClusters[i].size() << endl;
+	//}
 	//----------------------------------------------------------------------------------------
 	for (auto& it : KLClusters) {
 		for (auto& it2 : it) {
@@ -225,7 +225,7 @@ void Cluster::findOptimalGrouping(vector<FlipFlop>& points, Board& board) {
 		//bank some Flip Flop to multibits
 		vector<FlipFlop> points2 = points;
 		for (int j = 0; j < q; j++) {
-			srand(time(0));
+			srand(time(0) + j);
 			int bitNum = availableBits.at(rand() % availableBits.size()); //bit number to be banked
 			while (bitNum == minBits) {
 				bitNum = availableBits.at(rand() % availableBits.size());
@@ -253,16 +253,16 @@ void Cluster::findOptimalGrouping(vector<FlipFlop>& points, Board& board) {
 				}
 			}
 			//banking
-			int x = 0; //(x,y) is the center of the points to be banked
-			int y = 0;
-			for (auto& it : pointsToBank) {
-				x += it.getX();
-				y += it.getY();
-			}
-			x /= pointsToBank.size();
-			y /= pointsToBank.size();
-			FlipFlop bankedFlipFlop;
 			if (num == bitNum) {
+				int x = 0; //(x,y) is the center of the points to be banked
+				int y = 0;
+				for (auto& it : pointsToBank) {
+					x += it.getX();
+					y += it.getY();
+				}
+				x /= pointsToBank.size();
+				y /= pointsToBank.size();
+				FlipFlop bankedFlipFlop;
 				for (auto& it2 : FlipFlopLib) {
 					if (it2.getN() == bitNum) {
 						FlipFlop after = it2;
