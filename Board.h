@@ -4,7 +4,8 @@
 #include <set>
 #include <map>
 #include <unordered_map>
-#include <time.h>
+#include <ctime>
+#include <climits>
 #include "Cell.h"
 #include "FlipFlop.h"
 #include "Gate.h"
