@@ -2,7 +2,7 @@
 #include <ctime>
 #include <random>
 #include <cctype>
-#include <float.h>
+#include <cfloat>
 Cluster::Cluster() {
 	n = 20;
 	k = 100;
