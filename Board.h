@@ -4,8 +4,7 @@
 #include <set>
 #include <map>
 #include <unordered_map>
-#include <ctime>
-#include <climits>
+#include <time.h>
 #include "Cell.h"
 #include "FlipFlop.h"
 #include "Gate.h"
@@ -74,8 +73,8 @@ public:
 	void Qdfs(string, map<string, bool>&, int, float&, int, int);
 	void updateDSlack(string, float&, int, int);
 	void updateQSlack(string, map<string, bool>&, float, int, int);
-	void Banking(vector<vector<FlipFlop>>, vector<FlipFlop>&);   // only banking 1 bit
-	void Debanking(vector<FlipFlop>, vector<vector<FlipFlop>>&);  // only debanking into 1 bit
+	void Banking(vector<FlipFlop>, FlipFlop&);   // only banking 1 bit
+	void Debanking(FlipFlop, vector<FlipFlop>&); // only debanking into 1 bit
 	float bankingCompare(vector<FlipFlop>, FlipFlop);
 	float singleCompare(FlipFlop, FlipFlop);
 	bool Check();
