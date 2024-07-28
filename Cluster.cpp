@@ -322,26 +322,30 @@ FlipFlop Cluster::updateFlipFlop(FlipFlop before, FlipFlop after, Board& board) 
 	}
 	vector<FlipFlop> bef;
 	bef.push_back(before);
-	vector<vector<FlipFlop>> vectorBef;
-	vectorBef.push_back(bef);
-	vector<FlipFlop> aft;
-	aft.push_back(after);
+	//vector<vector<FlipFlop>> vectorBef;
+	//vectorBef.push_back(bef);
+	//vector<FlipFlop> aft;
+	//aft.push_back(after);
 	cout << "updateFlipFlop   " << before.getInstName() << "  " << before.getCellName() << " -> " << after.getCellName() << "  ";
-	board.Banking(vectorBef, aft);
-	return aft.at(0);
+	//board.Banking(vectorBef, aft);
+	board.Banking(bef, after);
+	cout << "  " << after.getInstName() << endl;
+	return after;
 }
 void Cluster::updateBankedFlipFlop(vector<FlipFlop> before, FlipFlop after, Board& board) {
 	//update banked flip flop
-	vector<vector<FlipFlop>> vectorBef;
-	vectorBef.push_back(before);
-	vector<FlipFlop> aft;
-	aft.push_back(after);
+	//vector<vector<FlipFlop>> vectorBef;
+	//vectorBef.push_back(before);
+	//vector<FlipFlop> aft;
+	//aft.push_back(after);
 	cout << "updateBankedFlipFlop   ";
 	for (auto it : before) {
 		cout << it.getInstName() << "  " << it.getCellName() << ", ";
 	}
 	cout << " -> " << after.getCellName() << "  ";
-	board.Banking(vectorBef, aft);
+	//board.Banking(vectorBef, aft);
+	board.Banking(before, after);
+	cout << "  " << after.getInstName() << endl;
 }
 bool Cluster::compareFlipFlop(FlipFlop& lhs, FlipFlop& rhs) {
 	if (lhs.getN() == rhs.getN()) {
