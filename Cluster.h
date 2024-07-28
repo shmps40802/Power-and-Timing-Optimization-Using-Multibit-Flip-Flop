@@ -6,7 +6,7 @@
 #include <set>
 #include <cmath>
 #include <algorithm>
-#include <unordered_map>
+#include <map>
 #include "Board.h"
 using namespace std;
 class Cluster {
@@ -52,7 +52,7 @@ public:
     void kmeans(Board&);
     static bool compareFlipFlop(FlipFlop&, FlipFlop&);
     void findOptimalGrouping(vector<FlipFlop>&, Board&);
-    void updateFlipFlop(FlipFlop, FlipFlop, Board&);
+    FlipFlop updateFlipFlop(FlipFlop, FlipFlop, Board&);
     void updateBankedFlipFlop(vector<FlipFlop>, FlipFlop, Board&);
 };
 #endif
