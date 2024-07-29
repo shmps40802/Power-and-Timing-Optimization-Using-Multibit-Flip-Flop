@@ -116,13 +116,13 @@ void Cluster::kmeans(Board& board) {
 			float a = 0, b = 0, avea, aveb, coua = 0, coub = 0;
 			kMeansClustering(DataPoints[i], KCentroids[i], KCounts[i], epochs, TK);
 			for (size_t j = 0; j < DataPoints[i].size() - 1; j++) {//Silhouettescore
-				for (size_t k = j + 1; k < DataPoints[i].size(); k++) {
-					if (DataPoints[i][j].getCluster() == DataPoints[i][k].getCluster()) {
-						a += abs(DataPoints[i][j].getX() - DataPoints[i][k].getX()) + abs(DataPoints[i][j].getY() - DataPoints[i][k].getY());
+				for (size_t m = j + 1; m < DataPoints[i].size(); m++) {
+					if (DataPoints[i][j].getCluster() == DataPoints[i][m].getCluster()) {
+						a += abs(DataPoints[i][j].getX() - DataPoints[i][m].getX()) + abs(DataPoints[i][j].getY() - DataPoints[i][m].getY());
 						coua++;
 					}
 					else {
-						b += abs(DataPoints[i][j].getX() - DataPoints[i][k].getX()) + abs(DataPoints[i][j].getY() - DataPoints[i][k].getY());
+						b += abs(DataPoints[i][j].getX() - DataPoints[i][m].getX()) + abs(DataPoints[i][j].getY() - DataPoints[i][m].getY());
 						coub++;
 					}
 				}
