@@ -146,7 +146,7 @@ void Cluster::kmeans(Board& board) {
 			cout << "NEWSilhouettescore : " << tmp << endl;
 			if (tmp > Silhouettescore) {
 				Silhouettescore = tmp;
-				k = TK;
+				l = TK;
 				TK++;
 				t = 0;
 			}  // score improved
@@ -156,6 +156,7 @@ void Cluster::kmeans(Board& board) {
 				if (t > 9)break;
 			}  // score no improved
 		}
+		KLClusters[i].resize(l);
 		for (auto& p : DataPoints[i]) {
 			KLClusters[i][p.getCluster()].push_back(p);
 		}
