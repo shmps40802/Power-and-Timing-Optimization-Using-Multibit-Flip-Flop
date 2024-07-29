@@ -5,7 +5,7 @@
 #include <cfloat>
 Cluster::Cluster() {
 	n = 20;
-	k = 100;
+	k = 2;
 	l = 50;
 	r = 10;
 	epochs = 5;
@@ -124,7 +124,55 @@ void Cluster::kmeans(Board& board) {
 			t++;
 		}*/
 	}
-	kMeansClustering(DataPoints, centroids, counts, epochs, k);
+	double tmp = 0;   //Silhouettescore
+	int TK = k;       //Silhouettescore
+	double Silhouettescore = -1;
+	int t = 0;
+	while (true) {//Silhouettescore
+		cout << TK << "\n";
+		float a = 0, b = 0, avea, aveb, coua = 0, coub = 0;
+		kMeansClustering(DataPoints, centroids, counts, epochs, k);
+		for (size_t i = 0; i < DataPoints.size() - 1; i++) {//Silhouettescore
+			for (size_t j = i + 1; j < DataPoints.size(); j++) {
+				if (DataPoints[i].getCluster() == DataPoints[j].getCluster()) {
+					a += abs(DataPoints[i].getX() - DataPoints[j].getX()) + abs(DataPoints[i].getY() - DataPoints[j].getY());
+					coua++;
+				}
+				else {
+					b += abs(DataPoints[i].getX() - DataPoints[j].getX()) + abs(DataPoints[i].getY() - DataPoints[j].getY());
+					coub++;
+				}
+			}
+		}
+		if (coua == 0) {
+			avea = 0;
+		}
+		else {
+			avea = a / coua;
+			cout << "avea : " << avea << endl;
+		}
+		if (coub == 0) {
+			aveb = 0;
+		}
+		else {
+			aveb = b / coub;
+			cout << "aveb : " << aveb << endl;
+		}
+		tmp = (aveb - avea) / max(avea, aveb);
+		cout << "Silhouettescore : " << Silhouettescore << endl;
+		cout << "NEWSilhouettescore : " << tmp << endl;
+		if (tmp > Silhouettescore) {
+			Silhouettescore = tmp;
+			k = TK;
+			TK++;
+			t = 0;
+		}  // score improved
+		else {
+			t++;
+			TK++;
+			if (t > 9)break;
+		}  // score no improved
+	}
 	//cout << t << " variation\n";
 	KClusters.resize(k);
 	for (auto& p : DataPoints) {
