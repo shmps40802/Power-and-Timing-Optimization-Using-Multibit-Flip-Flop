@@ -63,17 +63,18 @@ private:
 public:
 	Board();
 	~Board();
-	void ReadFile();                                             // read file
-	void Display();
+	void ReadFile(void);                                             // read file
+	void Display(void);
+	void outputFile(void);
 	void Plot();
 	Point NametoPoint(string);
 	Cell getCell(string);                                        // get FlipFlop Gate
 	void addNet(string, string);                                 // add point to net
 	void removeNet(string, string);                              // remove point from net
 	void Ddfs(string, float&, int, int);
-	void Qdfs(string, map<string, bool>&, int, float&, int, int);
+	void Qdfs(string, map<string, bool>&, int, float&, int, int, float);
 	void updateDSlack(string, float&, int, int);
-	void updateQSlack(string, map<string, bool>&, float, int, int);
+	void updateQSlack(string, map<string, bool>&, float, int, int, float);
 	void Banking(vector<FlipFlop>, FlipFlop&);   // only banking 1 bit
 	void Debanking(FlipFlop, vector<FlipFlop>&); // only debanking into 1 bit
 	float bankingCompare(vector<FlipFlop>, FlipFlop);
