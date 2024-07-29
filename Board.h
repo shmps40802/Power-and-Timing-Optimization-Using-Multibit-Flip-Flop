@@ -27,10 +27,10 @@ struct node {
 class Board {
 private:
 	friend class Cluster;
-	int Alpha;
-	int Beta;
-	int Gemma;
-	int Delta;
+	float Alpha;
+	float Beta;
+	float Gemma;
+	float Delta;
 	int LowerLeftX;
 	int HigherRightX;
 	int LowerLeftY;
