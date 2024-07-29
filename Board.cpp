@@ -43,7 +43,7 @@ Board::Board() {
 	CellNumber = 1;
 }
 Board::~Board() {}
-void Board::ReadFile() {
+void Board::ReadFile(void) {
 	ifstream fin;
 	string Filename = "testcase1.txt";
 	//cout << "filename :";
@@ -127,8 +127,6 @@ void Board::ReadFile() {
 			for (auto& it : F.getPin()) {
 				string instname = InstName + "/" + it.name;
 				InstToFlipFlop[InstName].setsource(it.name, instname);
-				//cout << "st\n";
-				
 			}//memory
 			//cout << InstToFlipFlop[InstName].getsource("CLK")[0] << endl;
 			Location[x][y].push_back(InstName);
@@ -192,26 +190,15 @@ void Board::ReadFile() {
 	}
 	fin.close();
 }
-
-void Board::Display() {
-	string c1 = "C101863", c2 = "C101864";
-	vector<FlipFlop> F1;
-	F1.push_back(InstToFlipFlop[c1]);
-	F1.push_back(InstToFlipFlop[c2]);
-	int x1 = F1[0].getX();
-	int y1 = F1[0].getY();
-	int x2 = F1[1].getX();
-	int y2 = F1[1].getY();
-	FlipFlop F2;
-	for (auto& it : FlipFlopLib) {
-		if (it.second.getN() == 2) {
-			F2 = it.second;
-			F2.setPos(F1[0].getX(), F1[0].getY());
-			Banking(F1, F2);
-			Debanking(F2, F1);
-			break;
-		}
+void Board::Display(void) {
+	ofstream fout;
+	fout.open("check.txt");
+	for (auto& it : InstToFlipFlop) {
+		fout << it.first << "\n";
 	}
+	fout.close();
+}
+void Board::outputFile(void) {
 	ofstream fout;
 	fout.open("output.txt");
 	fout << "CellInst " << NewFlipFlop.size() << "\n";
@@ -345,20 +332,16 @@ void Board::Ddfs(string PinName, float &NS, int x, int y) {
 			}
 			int x1 = P.x + F1.getX();
 			int y1 = P.y + F1.getX();
-			float WL = (float)abs(x1 - x2) + abs(y1 - y2) - abs(x - x2) - abs(y - y2);
+			float WL = (float) abs(x1 - x2) + abs(y1 - y2) - abs(x - x2) - abs(y - y2);
 			float nslack = NS < 0 ? NS : 0;
 			float newslack = NS + DisplacementDelay * WL;
 			float newnslack = newslack < 0 ? newslack : 0;
-			NS = newnslack - nslack;
-			/*std::cout << it << " " << x2 << " " << y2 << "\n";
-			std::cout << "Initial\n" << PinName << " " << x1 << " " << y1 <<"\n";
-			std::cout << "After\n" << x << " " << y << "\n";
-			std::cout << "WL = " << WL << "\n";*/
+			NS = nslack - newnslack;
 			return;
 		}
 	}
 }
-void Board::Qdfs(string PinName, map<string, bool>& visited, int WL, float &NS, int x, int y) {
+void Board::Qdfs(string PinName, map<string, bool>& visited, int WL, float &NS, int x, int y, float dq) {
 	visited[PinName] = true;
 	string netname = PointToNet[PinName];
 	for (auto& it : Net[netname]) {
@@ -372,33 +355,30 @@ void Board::Qdfs(string PinName, map<string, bool>& visited, int WL, float &NS, 
 			FlipFlop F1 = InstToFlipFlop[PinName.substr(0, PinName.find("/"))];
 			Cell F2 = getCell(cname);
 			int x1 = P.x + F1.getX();
-			int y1 = P.y + F1.getX();
+			int y1 = P.y + F1.getY();
 			int x2 = tmp.x + F2.getX();
 			int y2 = tmp.y + F2.getY();
-			WL = abs(x1 - x2) + abs(y1 - y2) - abs(x - x2) - abs(y - y2);
-			/*std::cout << it << " " << x2 << " " << y2 << "\n";
-			std::cout << "Initial\n" << PinName << " " << x1 << " " << y1 <<"\n";
-			std::cout << "After\n" << x << " " << y << "\n";
-			std::cout << "WL = " << WL << "\n";*/
+			int WL1 = abs(x1 - x2) + abs(y1 - y2);
+			int WL2 = abs(x - x2) + abs(y - y2);
+			WL = WL1 - WL2;
 		}
-		//cout << it << " " << WL << "\n";
 		if (InstToFlipFlop.find(cname) == InstToFlipFlop.end()) {
 			for (auto &p : InstToGate[cname].getPin()) {
 				if (p.name.find("OUT") == string::npos) continue;
-				Qdfs(cname + "/" + p.name, visited, WL, NS, x, y);
+				Qdfs(cname + "/" + p.name, visited, WL, NS, x, y, dq);
 			}
 		}  // connect to gate
 		else {
 			float slack = InstToFlipFlop[cname].getSlack()[pname];
 			float nslack = slack < 0 ? slack : 0;
-			float newslack = slack + DisplacementDelay * WL;
+			float newslack = slack + DisplacementDelay * WL + dq;
 			float newnslack = newslack < 0 ? newslack : 0;
-			NS -= nslack;
-			NS += newnslack;
+			NS += nslack;
+			NS -= newnslack;
 		}  // connect to flipflop
 	}
 }
-void Board::updateDSlack(string PinName, float &NS, int x, int y) {
+void Board::updateDSlack(string PinName, float& NS, int x, int y) {
 	string netname = PointToNet[PinName];
 	for (auto& it : Net[netname]) {
 		if (it.find("Q") != string::npos || it.find("OUT") != string::npos
@@ -409,35 +389,24 @@ void Board::updateDSlack(string PinName, float &NS, int x, int y) {
 			Point tmp = NametoPoint(it);
 			FlipFlop F1 = InstToFlipFlop[cname];
 			Cell F2;
-			int x2, y2;
+			int x2 = tmp.x;
+			int y2 = tmp.y;
 			pos = it.find("/");
 			cname = it.substr(0, pos);
 			if (pos != string::npos) {
-				if (InstToFlipFlop.find(cname) != InstToFlipFlop.end()) {
-					F2 = InstToFlipFlop[cname];
-				}
-				else if (InstToGate.find(cname) != InstToGate.end()) {
-					F2 = InstToGate[cname];
-				}
-				else {
-					cout << cname << " can't be found\n";
-				}
-				x2 = tmp.x + F2.getX();
-				y2 = tmp.y + F2.getY();
-			}
-			else {
-				x2 = tmp.x;
-				y2 = tmp.y;
+				F2 = getCell(cname);
+				x2 += F2.getX();
+				y2 += F2.getY();
 			}
 			int x1 = P.x + F1.getX();
 			int y1 = P.y + F1.getY();
-			float WL = (float)abs(x1 - x2) + abs(y1 - y2) - abs(x - x2) - abs(y - y2);
+			float WL = (float) abs(x1 - x2) + abs(y1 - y2) - abs(x - x2) - abs(y - y2);
 			NS = NS + DisplacementDelay * WL;
 			return;
 		}
 	}
 }
-void Board::updateQSlack(string PinName, map<string, bool> &visited, float WL, int x, int y) {
+void Board::updateQSlack(string PinName, map<string, bool> &visited, float WL, int x, int y, float dq) {
 	visited[PinName] = true;
 	string netname = PointToNet[PinName];
 	for (auto& it : Net[netname]) {
@@ -449,13 +418,7 @@ void Board::updateQSlack(string PinName, map<string, bool> &visited, float WL, i
 			Point P = NametoPoint(PinName);
 			Point tmp = NametoPoint(it);
 			FlipFlop F1 = InstToFlipFlop[PinName.substr(0, PinName.find("/"))];
-			Cell F2;
-			if (InstToFlipFlop.find(cname) != InstToFlipFlop.end()) {
-				F2 = InstToFlipFlop[cname];
-			}
-			else if (InstToGate.find(cname) != InstToGate.end()) {
-				F2 = InstToGate[cname];
-			}
+			Cell F2 = getCell(cname);
 			// prev and connect pin
 			int x1 = P.x + F1.getX();
 			int y1 = P.y + F1.getY();
@@ -463,18 +426,22 @@ void Board::updateQSlack(string PinName, map<string, bool> &visited, float WL, i
 			int y2 = tmp.y + F2.getY();
 			WL = (float)abs(x1 - x2) + abs(y1 - y2) - abs(x - x2) - abs(y - y2);
 		}
-		if (InstToFlipFlop.find(cname) == InstToFlipFlop.end()) {
-			for (auto& p : InstToGate[cname].getPin()) {
+		if (InstToGate.find(cname) != InstToGate.end()) {
+			vector<Point> points = InstToGate[cname].getPin();
+			for (auto& p : points) {
 				if (p.name.find("OUT") == string::npos) continue;
-				updateQSlack(cname + "/" + p.name, visited, WL, x, y);
+				updateQSlack(cname + "/" + p.name, visited, WL, x, y, dq);
 			}
 		}  // connect to gate
-		else {
+		else if(InstToFlipFlop.find(cname) != InstToFlipFlop.end()) {
 			float slack = InstToFlipFlop[cname].getSlack()[pname];
-			float newslack = slack + DisplacementDelay * WL;
+			float newslack = slack + DisplacementDelay * WL + dq;
 			InstToFlipFlop[cname].setSlack(pname, newslack);
-			cout << it << " " << newslack << "\n";
 		}  // connect to flipflop
+		else {
+			cout << cname << " not added yet\n";
+			system("pause");
+		}
 	}
 }
 void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
@@ -482,6 +449,10 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 	CellNumber++;
 	NewFlipFlop.insert(FlipFlopName);
 	F2.setInstName(FlipFlopName);
+	int x = F2.getX();
+	int y = F2.getY();
+	Location[x][y].push_back(FlipFlopName);
+	InstToFlipFlop[FlipFlopName] = F2;
 	vector<Point> curPin = F2.getPin();
 	int d = 0, q = 0, c = 0, w = 0;
 	for (size_t j = 0; j < F1.size(); j++) {
@@ -491,6 +462,8 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 			NewFlipFlop.erase(F1[j].getInstName());
 		}
 		string prevcell = F1[j].getInstName();
+		vector<string> tmp1;  // prev
+		vector<string> tmp2;  // cur
 		for (auto& p : PrevPin) {
 			string prev = prevcell + "/" + p.name;
 			string cur;
@@ -502,18 +475,18 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 					d++;
 				}
 				string D = "D" + to_string(dd + w);
-				if (F2.getN() == 1) {
+				if (InstToFlipFlop[FlipFlopName].getN() == 1) {
 					D = "D";
 				}
-				F2.setsource(D, p.sourcename[0]);
-				dd++;  //memory
+				InstToFlipFlop[FlipFlopName].setsource(D, p.sourcename[0]);
+				dd++;
 				cur = FlipFlopName + "/" + curPin[d].name;
 				map<string, bool> visited;
 				float NS = F1[j].getSlack()[p.name];
-				int fx = F2.getX() + curPin[d].x;
-				int fy = F2.getY() + curPin[d].y;
+				int fx = InstToFlipFlop[FlipFlopName].getX() + curPin[d].x;
+				int fy = InstToFlipFlop[FlipFlopName].getY() + curPin[d].y;
 				updateDSlack(prev, NS, fx, fy);
-				F2.setSlack(curPin[d].name, NS);
+				InstToFlipFlop[FlipFlopName].setSlack(curPin[d].name, NS);
 				d++;
 			}
 			else if (p.type == 'Q') {
@@ -521,17 +494,18 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 					q++;
 				}
 				string Q = "Q" + to_string(qq + w);
-				if (F2.getN() == 1) {
+				if (InstToFlipFlop[FlipFlopName].getN() == 1) {
 					Q = "Q";
 				}
-				F2.setsource(Q, p.sourcename[0]);
-				qq++;  //memory
+				InstToFlipFlop[FlipFlopName].setsource(Q, p.sourcename[0]);
+				qq++;
 				cur = FlipFlopName + "/" + curPin[q].name;
 				map<string, bool> visited;
 				float WL = 0;
-				int fx = F2.getX() + curPin[q].x;
-				int fy = F2.getY() + curPin[q].y;
-				updateQSlack(prev, visited, WL, fx, fy);
+				float dq = F1[j].getQpinDelay() - F2.getQpinDelay();
+				int fx = InstToFlipFlop[FlipFlopName].getX() + curPin[q].x;
+				int fy = InstToFlipFlop[FlipFlopName].getY() + curPin[q].y;
+				updateQSlack(prev, visited, WL, fx, fy, dq);
 				q++;
 			}
 			else if (p.type == 'C') {
@@ -539,8 +513,8 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 					c++;
 				}
 				for (int ww = 0; ww < p.sourcename.size(); ww++) {
-					F2.setsource("CLK", p.sourcename[ww]);
-				}  //memory
+					InstToFlipFlop[FlipFlopName].setsource("CLK", p.sourcename[ww]);
+				}
 				cur = FlipFlopName + "/" + curPin[c].name;
 			}
 			else {
@@ -548,11 +522,8 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 				break;
 			}
 			// modify net connection
-			string netname = PointToNet[prev];
-			Net[netname].erase(prev);
-			Net[netname].insert(cur);
-			PointToNet.erase(prev);
-			PointToNet[cur] = netname;
+			tmp1.push_back(prev);
+			tmp2.push_back(cur);
 		}
 		// delete cell from location
 		int fx = F1[j].getX();
@@ -562,14 +533,17 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 				Location[fx][fy].erase(Location[fx][fy].begin() + k);
 			}
 		}
+		for (size_t i = 0; i < tmp1.size(); i++) {
+			string netname = PointToNet[tmp1[i]];
+			Net[netname].erase(tmp1[i]);
+			Net[netname].insert(tmp2[i]);
+			PointToNet.erase(tmp1[i]);
+			PointToNet[tmp2[i]] = netname;
+		}
 		InstToFlipFlop.erase(F1[j].getInstName());
-		w += F1[j].getN();  //memory
+		w += F1[j].getN();
 	}
-	//F2[i].display();
-	int x = F2.getX();
-	int y = F2.getY();
-	Location[x][y].push_back(FlipFlopName);
-	InstToFlipFlop[FlipFlopName] = F2;
+	F2 = InstToFlipFlop[FlipFlopName];
 }
 void Board::Debanking(FlipFlop F1, vector<FlipFlop>& F2) {
 	vector<Point> prevPin = F1.getPin();
@@ -627,9 +601,10 @@ void Board::Debanking(FlipFlop F1, vector<FlipFlop>& F2) {
 				prev = prevcell + "/" + prevPin[q].name;
 				map<string, bool> visited;
 				float WL = 0;
+				float dq = F1.getQpinDelay() - F2[j].getQpinDelay();
 				int fx = F2[j].getX() + p.x;
 				int fy = F2[j].getY() + p.y;
-				updateQSlack(prev, visited, WL, fx, fy);
+				updateQSlack(prev, visited, WL, fx, fy, dq);
 				netname = PointToNet[prev];
 				Net[netname].erase(prev);
 				PointToNet.erase(prev);
@@ -678,15 +653,15 @@ float Board::bankingCompare(vector<FlipFlop> prev, FlipFlop cur) {
 	int y = cur.getY();
 	float sum = 0;
 	float PowerComp = cur.getPower();
-	float AreaComp = (float)cur.getArea();
+	float AreaComp = (float) cur.getArea();
 	float NSComp = 0;
 	for (auto& f : prev) {
 		PowerComp -= f.getPower();
 		AreaComp -= f.getArea();
 	}
+	vector<Point> curPin = cur.getPin();
 	for (auto& f : prev) {
 		vector<Point> prevPin = f.getPin();
-		vector<Point> curPin = cur.getPin();
 		int d = 0, q = 0, c = 0;
 		for (auto &p : prevPin) {
 			if (p.type == 'D') {
@@ -707,12 +682,13 @@ float Board::bankingCompare(vector<FlipFlop> prev, FlipFlop cur) {
 				string PinName = f.getInstName() + "/" + p.name;
 				int WL = 0;
 				float NS = 0;
+				float dq = f.getQpinDelay() - cur.getQpinDelay();
 				while (curPin[q].type != 'Q') {
 					q++;
 				}
 				int fx = cur.getX() + curPin[q].x;
 				int fy = cur.getY() + curPin[q].y;
-				Qdfs(PinName, visited, WL, NS, fx, fy);
+				Qdfs(PinName, visited, WL, NS, fx, fy, dq);
 				q++;
 				NSComp += NS;
 			}
@@ -726,8 +702,8 @@ float Board::singleCompare(FlipFlop prev, FlipFlop cur) {
 	int x = cur.getX();
 	int y = cur.getY();
 	float sum = 0;
-	float PowerComp = (float)cur.getPower();
-	float AreaComp = (float)cur.getArea();
+	float PowerComp = cur.getPower();
+	float AreaComp = (float) cur.getArea();
 	float NSComp = 0;
 	PowerComp -= prev.getPower();
 	AreaComp -= prev.getArea();
@@ -753,12 +729,13 @@ float Board::singleCompare(FlipFlop prev, FlipFlop cur) {
 			string PinName = prev.getInstName() + "/" + p.name;
 			int WL = 0;
 			float NS = 0;
+			float dq = prev.getQpinDelay() - cur.getQpinDelay();
 			while (curPin[q].type != 'Q') {
 				q++;
 			}
 			int fx = cur.getX() + curPin[q].x;
 			int fy = cur.getY() + curPin[q].y;
-			Qdfs(PinName, visited, WL, NS, fx, fy);
+			Qdfs(PinName, visited, WL, NS, fx, fy, dq);
 			NSComp += NS;
 			q++;
 		}
