@@ -110,14 +110,11 @@ void Cluster::kmeans(Board& board) {
 		double Silhouettescore = -1;
 		int t = 0;
 		while (true) {//Silhouettescore
-			if (DataPoints[i].size() < 5) {
+			if (DataPoints[i].size() < sqrt(board.getInstsize()) / 10) {
 				rec = 1;
 				for (auto& it : DataPoints[i]) {
 					it.setCluster(0);
 				}
-				break;
-			}
-			else if (TK > sqrt(DataPoints[i].size())) {
 				break;
 			}
 			float a = 0, b = 0, avea, aveb, coua = 0, coub = 0;
