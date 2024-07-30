@@ -34,15 +34,13 @@ private:
     };*/
     vector<vector<FlipFlop>> DataPoints; //represent point of all flip flops
     vector<vector<vector<FlipFlop>>> KLClusters; //k clusters in total, each cluster is divided into l clusters, and the points contained in each cluster
-    vector<vector<FlipFlop>> KCentroids; //k clusters in total, each cluster is divided into l clusters, and the centroid of each cluster
-    vector<vector<int>> KCounts; //k clusters in total, each cluster is divided into l clusters, and the number of points in each cluster
     vector<FlipFlop> FlipFlopLib; //create FlipFlop library
     vector<int> availableBits; //available bits in FlipFlopLib
 public:
     Cluster();
     Cluster(int, int, int, int, int, int, double, double, int, int);
     void initializeVector(int, int);
-    void kMeansClustering(vector<FlipFlop>&, vector<FlipFlop>&, vector<int>&, int, int);
+    void kMeansClustering(vector<FlipFlop>&, int, int);
     double distance(FlipFlop, FlipFlop);
     void readData(Board&);
     void kmeans(Board&);
