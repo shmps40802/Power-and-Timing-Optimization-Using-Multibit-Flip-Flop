@@ -39,35 +39,34 @@ void Cluster::initializeVector(int k, int l) {
 	// counts.resize(k, 0);
 	// KCounts.resize(k, vector<int>(l, 0));
 }
-void Cluster::kMeansClustering(vector<FlipFlop>& points, vector<FlipFlop>& centroids, vector<int>& counts, int epochs, int k) {
-	centroids.resize(k);
-	counts.resize(k, 0);
-
+void Cluster::kMeansClustering(vector<FlipFlop>& points, int epochs, int kc) {
+	vector<FlipFlop> centroids(kc);
+	vector<int> counts(kc, 0);
 	srand(time(0));
-	size_t n = points.size();
+	size_t size = points.size();
 	set<int> S;
-	for (int i = 0; i < k; ++i) { //find k centroids
-		int s = rand() % n;
+	for (int i = 0; i < kc; i++) { //find k centroids
+		int s = (int) rand() % size;
 		while (S.find(s) != S.end()) {
-			s = rand() % n;
+			s = rand() % size;
 		}
 		S.insert(s);
 		centroids[i] = points[s]; //centroid located at points[s]
 	}
+	//cout << "kc = " << kc << "/" << points.size() << "\n";
 	while (epochs--) { //iteration times
 		for (auto& p : points) {
 			double minDist = Max;
-			for (int i = 0; i < k; i++) {
+			for (int i = 0; i < kc; i++) {
 				double dist = distance(p, centroids[i]); //distance from p to centroids[i]
 				if (dist < minDist) {
-					//p.cluster = i;
 					p.setCluster(i);
 					minDist = dist;
 				}
 			}
 		}
-		vector<double> sumX(k, 0);
-		vector<double> sumY(k, 0);
+		vector<double> sumX(kc, 0);
+		vector<double> sumY(kc, 0);
 		fill(counts.begin(), counts.end(), 0); //set counts to 0
 		for (auto& it : points) {
 			int clusterId = it.getCluster();
@@ -75,7 +74,7 @@ void Cluster::kMeansClustering(vector<FlipFlop>& points, vector<FlipFlop>& centr
 			sumX[clusterId] += (it.getX() - Max);
 			sumY[clusterId] += (it.getY() - Max);
 		}
-		for (int i = 0; i < k; i++) {
+		for (int i = 0; i < kc; i++) {
 			centroids[i].setPos(Max + sumX[i] / (double)counts[i], Max + sumY[i] / (double)counts[i]); //new cluster centroid position
 		}
 	}
@@ -91,9 +90,7 @@ void Cluster::readData(Board& board) {
 		}
 		DataPoints.push_back(tmp);
 	}
-	KLClusters.resize(k);
-	KCentroids.resize(k);
-	KCounts.resize(k);
+	KLClusters.resize(DataPoints.size());
 	for (auto& it : board.FlipFlopLib) {
 		FlipFlopLib.push_back(it.second);
 		int bits = it.second.getN();
@@ -109,12 +106,22 @@ void Cluster::kmeans(Board& board) {
 	for (size_t i = 0; i < DataPoints.size(); i++) {
 		double tmp = 0;   //Silhouettescore
 		int TK = 2;       //Silhouettescore
+		int rec = 0;
 		double Silhouettescore = -1;
 		int t = 0;
 		while (true) {//Silhouettescore
-			cout << TK << "\n";
+			if (DataPoints[i].size() < 5) {
+				rec = 1;
+				for (auto& it : DataPoints[i]) {
+					it.setCluster(0);
+				}
+				break;
+			}
+			else if (TK > sqrt(DataPoints[i].size())) {
+				break;
+			}
 			float a = 0, b = 0, avea, aveb, coua = 0, coub = 0;
-			kMeansClustering(DataPoints[i], KCentroids[i], KCounts[i], epochs, TK);
+			kMeansClustering(DataPoints[i], epochs, TK);
 			for (size_t j = 0; j < DataPoints[i].size() - 1; j++) {//Silhouettescore
 				for (size_t m = j + 1; m < DataPoints[i].size(); m++) {
 					if (DataPoints[i][j].getCluster() == DataPoints[i][m].getCluster()) {
@@ -122,41 +129,32 @@ void Cluster::kmeans(Board& board) {
 						coua++;
 					}
 					else {
-						b += abs(DataPoints[i][j].getX() - DataPoints[i][m].getX()) + abs(DataPoints[i][j].getY() - DataPoints[i][m].getY());
+						b += abs(DataPoints[i][j].getX() - DataPoints[i][k].getX()) + abs(DataPoints[i][j].getY() - DataPoints[i][m].getY());
 						coub++;
 					}
 				}
 			}
-			if (coua == 0) {
-				avea = 0;
-			}
-			else {
-				avea = a / coua;
-				cout << "avea : " << avea << endl;
-			}
-			if (coub == 0) {
-				aveb = 0;
-			}
-			else {
-				aveb = b / coub;
-				cout << "aveb : " << aveb << endl;
-			}
+			avea = coua == 0 ? 0 : a / coua;
+			aveb = coub == 0 ? 0 : b / coub;
+			//cout << "avea : " << avea << endl;
+			//cout << "aveb : " << aveb << endl;
 			tmp = (aveb - avea) / max(avea, aveb);
-			cout << "Silhouettescore : " << Silhouettescore << endl;
-			cout << "NEWSilhouettescore : " << tmp << endl;
+			//cout << "Silhouettescore : " << Silhouettescore << endl;
+			//cout << "NEWSilhouettescore : " << tmp << endl;
 			if (tmp > Silhouettescore) {
 				Silhouettescore = tmp;
 				l = TK;
-				TK++;
+				rec = TK;
 				t = 0;
 			}  // score improved
 			else {
 				t++;
-				TK++;
-				if (t > 9)break;
+				if (t > 0)break;
 			}  // score no improved
+			TK++;
 		}
-		KLClusters[i].resize(l);
+		kMeansClustering(DataPoints[i], epochs, rec);
+		KLClusters[i].resize(rec);
 		for (auto& p : DataPoints[i]) {
 			KLClusters[i][p.getCluster()].push_back(p);
 		}
