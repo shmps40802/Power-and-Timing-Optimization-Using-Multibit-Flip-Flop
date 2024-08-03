@@ -27,6 +27,7 @@ struct node {
 class Board {
 private:
 	friend class Cluster;
+	friend class Legalization;
 	float Alpha;
 	float Beta;
 	float Gemma;
