@@ -33,6 +33,7 @@ class Board {
 private:
 	friend class Cluster;
 	friend class Legalization;
+	friend class Graph;
 	friend class G;
 	float Alpha;
 	float Beta;
@@ -96,6 +97,7 @@ public:
 	float BinCost(); // on grid point
 	float Cost();
 	int getInstsize();
+	void setWL(vector<pair<string,string>>, string);
 	void addWL(string, map<string, bool>&, float, bool);
 	void merge(vector<node>&, int, int, int);
 	void mergeSort(vector<node>&, int, int);
