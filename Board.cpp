@@ -54,7 +54,7 @@ Board::Board() {
 	}
 	vector<thread> threads;
 	vector<string> keys;
-    vector<float> values;
+	vector<float> values;
 	for (auto& f : InstToFlipFlop) {
 		for (auto& p : f.second.getPin()) {
 			if (p.type != 'D') continue;
