@@ -10,7 +10,7 @@ FlipFlop::FlipFlop(int N, int width, int height, int P, vector<Point> pin)
 	setPin(pin);
 }
 FlipFlop::~FlipFlop() {
-
+	
 }
 int FlipFlop::getN(void) {
 	return N;
@@ -24,11 +24,11 @@ float FlipFlop::getPower(void) {
 void FlipFlop::setQpinDelay(float delay) {
 	QpinDelay = delay;
 }
-int FlipFlop::getQpinDelay(void) {
+float FlipFlop::getQpinDelay(void) {
 	return QpinDelay;
 }
 void FlipFlop::display(void) {
-	cout << getInstName() << " " << getX() << " " << getY() << "\n";
+	cout << getInstNum() << " " << getX() << " " << getY() << "\n";
 	cout << getCellName() << " " << N << " " << getWidth() << " " << getHeight() << " " << getPinCount() << "\n";
 	for (auto& p : getPin()) {
 		cout << "Pin " << p.name << " " << p.x << " " << p.y << "\n";
@@ -50,8 +50,20 @@ int FlipFlop::getCluster(void) {
 	return cluster;
 }
 bool FlipFlop::operator==(const FlipFlop& other) const {
-	if (this->getInstName() == other.getInstName() && this->getCellName() == other.getCellName()) {
+	if (this->getInstNum() == other.getInstNum() && this->getCellName() == other.getCellName()) {
 		return true;
 	}
 	return false;
+}
+void FlipFlop::setConnection(string qname, string in, float WL) {
+	if (Connection[qname].find(in) != Connection[qname].end()) {
+		float prev = Connection[qname][in];
+		Connection[qname][in] = prev < WL ? prev : WL;
+	}
+	else {
+		Connection[qname][in] = WL;
+	}
+}
+map<string, map<string, float>> FlipFlop::getConnection(void) {
+	return Connection;
 }
