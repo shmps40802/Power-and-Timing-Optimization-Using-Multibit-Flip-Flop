@@ -12,15 +12,15 @@ using namespace std;
 class Cluster {
 private:
     int n;
-    int k; //divide into k clusters
-    int l;  //every cluster divide into l clusters
-    int r; // (points / centroid)
-    int epochs; //number of iterations to choose points' cluster
+    int k;      // divide into k clusters
+    int l;      // every cluster divide into l clusters
+    int r;      // (points / centroid)
+    int epochs; // number of iterations to choose points' cluster
     int maxBits;
     double MinVariance;
-    double Max; //max dimension of board
-    int p; //from p banking solutions, choose the best one
-    int q; //tries of banking in cluster
+    double Max; // max dimension of board
+    int p;      // from p banking solutions, choose the best one
+    int q;      // tries of banking in cluster
     /*struct Point {
         int x, y; //flip flop coordinate
         int N; // n bit(s)
