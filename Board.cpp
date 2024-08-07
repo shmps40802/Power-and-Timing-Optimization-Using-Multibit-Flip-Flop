@@ -54,7 +54,7 @@ Board::Board() {
 	}
 	vector<thread> threads;
 	vector<string> keys;
-	vector<float> values;
+    vector<float> values;
 	for (auto& f : InstToFlipFlop) {
 		for (auto& p : f.second.getPin()) {
 			if (p.type != 'D') continue;
@@ -1016,6 +1016,19 @@ void Board::addNeighbor(string p1, string p2) {
 			Net2[p1].insert(p2);
 			Net2[p2].insert(p1);
 		}
+	}
+}
+void Board::setWL(vector<pair<string,string>> Q, string D) {
+	size_t pos1 = D.find("/");
+	auto end = string::npos;
+	int cnum1 = stoi(D.substr(1, pos1));
+	string dname = D.substr(pos1 + 1, end);
+	float slack = InstToFlipFlop[cnum1].getSlack()[dname];
+	for (auto& q : Q) {
+		size_t pos2 = q.first.find("/");
+		int cnum2 = stoi(q.first.substr(1, pos2));
+		string qname = q.first.substr(pos2 + 1, end);
+		InstToFlipFlop[cnum2].setConnection(qname, q.second, slack);
 	}
 }
 void Board::addWL(string PinName, map<string, bool>& visited, float slack, bool t) {
