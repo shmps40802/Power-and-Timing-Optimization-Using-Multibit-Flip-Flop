@@ -53,7 +53,6 @@ void Cluster::kMeansClustering(vector<FlipFlop>& points, int epochs, int kc) {
 		S.insert(s);
 		centroids[i] = points[s]; //centroid located at points[s]
 	}
-	//cout << "kc = " << kc << "/" << points.size() << "\n";
 	while (epochs--) { //iteration times
 		for (auto& p : points) {
 			double minDist = Max;
@@ -189,10 +188,17 @@ void Cluster::kmeans(Board& board) {
 	//	cout << "KLClusters[" << i << "].size()  " << KLClusters[i].size() << endl;
 	//}
 	//----------------------------------------------------------------------------------------
+	int t = 0;
 	for (auto& it : KLClusters) {
+		int c = 0;
+		t++;
+		cout << t << "\n";
 		for (auto& it2 : it) {
 			if (it2.size() != 0) {
+				c++;
+				cout << c << "\n";
 				findOptimalGrouping(it2, board);
+				cout << "Cost : " << board.Cost() << "\n";
 			}
 		}
 	}
