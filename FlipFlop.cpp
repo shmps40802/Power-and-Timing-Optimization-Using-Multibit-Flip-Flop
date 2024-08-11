@@ -40,7 +40,7 @@ void FlipFlop::display(void) {
 void FlipFlop::setSlack(string PinName, float slack) {
 	this->slack[PinName] = slack;
 }
-map<string, float> FlipFlop::getSlack(void) {
+unordered_map<string, float> FlipFlop::getSlack(void) {
 	return slack;
 }
 void FlipFlop::setCluster(int x) {
@@ -55,15 +55,15 @@ bool FlipFlop::operator==(const FlipFlop& other) const {
 	}
 	return false;
 }
-void FlipFlop::setConnection(string qname, string in, float WL) {
-	if (Connection[qname].find(in) != Connection[qname].end()) {
-		float prev = Connection[qname][in];
-		Connection[qname][in] = prev < WL ? prev : WL;
-	}
-	else {
-		Connection[qname][in] = WL;
-	}
+void FlipFlop::setDWL(string dname, string qname, float arrival, string center) {
+	DWL[dname][qname] = make_pair(arrival, center);
 }
-map<string, map<string, float>> FlipFlop::getConnection(void) {
-	return Connection;
+unordered_map<string, unordered_map<string, pair<float, string>>> FlipFlop::getDWL(void) {
+	return DWL;
+}
+void FlipFlop::setQconnect(string qname, string dname) {
+	Qconnect[qname].insert(dname);
+}
+unordered_map<string, unordered_set<string>> FlipFlop::getQconnect(void) {
+	return Qconnect;
 }
