@@ -58,8 +58,8 @@ private:
 	int maxBit;
 	vector<Point> Input;                               // input pin(s)
 	vector<Point> Output;                              // output pin(s)
-	map<int, FlipFlop> FlipFlopLib;                    // Cellnumber to FlipFlop
-	map<int, Gate> GateLib;                            // Cellnumber to Gate
+	map<string, FlipFlop> FlipFlopLib;                    // Cellnumber to FlipFlop
+	map<string, Gate> GateLib;                            // Cellnumber to Gate
 	unordered_map<int, FlipFlop> InstToFlipFlop;       // instnumber to FlipFlop
 	unordered_map<int, Gate> InstToGate;               // instnumber to Gate
 	vector<vector<int>> FlipFlopByClk;                 // flipflop(s) with the same clk
@@ -69,8 +69,7 @@ private:
 	map<pair<int, int>, vector<int>> PlacementRows;    // grid point info
 	set<int> NewFlipFlop;                              // new number (of FlipFlop)
 	map<int, map<int, float>> BinDensity;              // bin density of board
-	unordered_map<string, unordered_set<string>> Net2; // 
-	map<string, float> DWL;                            // acceptable WL for each D pin
+	unordered_map<string, unordered_set<string>> Net2; //
 public:
 	Board();
 	~Board();
@@ -80,10 +79,12 @@ public:
 	void Plot();
 	Point NametoPoint(string);
 	Cell getCell(int);                                     // get FlipFlop Gate
-	void Ddfs(string, float&, int, int);
-	void Qdfs(string, map<string, bool>&, int, float&, int, int, float);
+	void addNet(int, string);
+	void removeNet(int, string);
+	void Dslack(string, float&, int, int);
+	void Qslack(string, float&, int, int, float);
 	void updateDSlack(string, float&, int, int);
-	void updateQSlack(string, map<string, bool>&, float, int, int, float);
+	void updateQSlack(string, int, int, float);
 	void Banking(vector<FlipFlop>, FlipFlop&);             // only banking 1 bit
 	void Debanking(FlipFlop, vector<FlipFlop>&);           // only debanking into 1 bit
 	float bankingCompare(vector<FlipFlop>, FlipFlop);
@@ -97,10 +98,11 @@ public:
 	float BinCost(); // on grid point
 	float Cost();
 	int getInstsize();
-	void setWL(vector<pair<string,string>>, string);
+	void setWL(string, string, string, int);
 	void addWL(string, map<string, bool>&, float, bool);
 	void merge(vector<node>&, int, int, int);
 	void mergeSort(vector<node>&, int, int);
 	void addNeighbor(string, string);
+	void removeNeighbor(string, string);
 };
 #endif
