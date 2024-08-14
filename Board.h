@@ -58,22 +58,23 @@ private:
 	int maxBit;
 	vector<Point> Input;                               // input pin(s)
 	vector<Point> Output;                              // output pin(s)
-	map<string, FlipFlop> FlipFlopLib;                    // Cellnumber to FlipFlop
-	map<string, Gate> GateLib;                            // Cellnumber to Gate
+	map<string, FlipFlop> FlipFlopLib;                 // Cellnumber to FlipFlop
+	map<string, Gate> GateLib;                         // Cellnumber to Gate
 	unordered_map<int, FlipFlop> InstToFlipFlop;       // instnumber to FlipFlop
 	unordered_map<int, Gate> InstToGate;               // instnumber to Gate
 	vector<vector<int>> FlipFlopByClk;                 // flipflop(s) with the same clk
-	unordered_map<int, unordered_set<string>> Net;        // netnumer to point name
-	unordered_map<string, int> PointToNet;                // point name to net number C1/D -> (net)1
+	unordered_map<int, unordered_set<string>> Net;     // netnumer to point name
+	unordered_map<string, int> PointToNet;             // point name to net number C1/D -> (net)1
 	map<int, map<int, vector<int>>> Location;          // location of (inst)number
 	map<pair<int, int>, vector<int>> PlacementRows;    // grid point info
 	set<int> NewFlipFlop;                              // new number (of FlipFlop)
 	map<int, map<int, float>> BinDensity;              // bin density of board
-	unordered_map<string, unordered_set<string>> Net2; //
+	unordered_map<string, unordered_map<string, pair<float, string>>> Ddelay;
+	unordered_map<string, unordered_set<string>> Qconnect;
 public:
 	Board();
 	~Board();
-	void ReadFile(void);                                      // read file
+	void ReadFile(void);                                   // read file
 	void Display(void);
 	void outputFile(void);
 	void Plot();
@@ -98,11 +99,8 @@ public:
 	float BinCost(); // on grid point
 	float Cost();
 	int getInstsize();
-	void setWL(string, string, string, int);
-	void addWL(string, map<string, bool>&, float, bool);
+	void setDelay(string, string, string, int);
 	void merge(vector<node>&, int, int, int);
 	void mergeSort(vector<node>&, int, int);
-	void addNeighbor(string, string);
-	void removeNeighbor(string, string);
 };
 #endif
