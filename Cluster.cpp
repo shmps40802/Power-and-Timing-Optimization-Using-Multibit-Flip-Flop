@@ -12,8 +12,8 @@ Cluster::Cluster() {
 	maxBits = 4;
 	MinVariance = DBL_MAX;
 	Max = 1281000;
-	p = 10;
-	q = 10;
+	p = 3;
+	q = 3;
 	// initializeVector(k, l);
 }
 
@@ -46,7 +46,7 @@ void Cluster::kMeansClustering(vector<FlipFlop>& points, int epochs, int kc) {
 	size_t size = points.size();
 	set<int> S;
 	for (int i = 0; i < kc; i++) { //find k centroids
-		int s = (int) rand() % size;
+		int s = (int)rand() % size;
 		while (S.find(s) != S.end()) {
 			s = rand() % size;
 		}
@@ -287,18 +287,18 @@ void Cluster::findOptimalGrouping(vector<FlipFlop>& points, Board& board) {
 					}
 				}
 				if (bankedFlipFlop.getN() == bitNum) { //found banked flip flop
-					for (auto& it2 : FlipFlopLib) {
-						if (it2.getN() == bitNum) {
-							FlipFlop after = it2;
-							after.setPos(x, y);
-							if (board.singleCompare(bankedFlipFlop, after) < 0) { //cost reduce
-								bankedFlipFlop = after;
-							}
-						}
-						else if (it2.getN() > bitNum) {
-							break;
-						}
-					}
+					//for (auto& it2 : FlipFlopLib) {
+					//	if (it2.getN() == bitNum) {
+					//		FlipFlop after = it2;
+					//		after.setPos(x, y);
+					//		if (board.singleCompare(bankedFlipFlop, after) < 0) { //cost reduce
+					//			bankedFlipFlop = after;
+					//		}
+					//	}
+					//	else if (it2.getN() > bitNum) {
+					//		break;
+					//	}
+					//}
 					for (auto& it : pointsToBank) {
 						points2.erase(remove(points2.begin(), points2.end(), it), points2.end());
 					}
