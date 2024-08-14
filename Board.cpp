@@ -253,7 +253,7 @@ void Board::ReadFile(void) {
 		}
 	}
 	fin.close();
-	ifstream fin2;
+	/*ifstream fin2;
 	fin2.open("connect.txt");
 	string Q, in, D;
 	int WL;
@@ -272,7 +272,7 @@ void Board::ReadFile(void) {
 		Qconnect[Q].insert(D);
 		Ddelay[D][Q] = make_pair(WL * DisplacementDelay + qdelay, in);
 	}
-	fin2.close();
+	fin2.close();*/
 }
 void Board::Display(void) {
 	ofstream fout;
