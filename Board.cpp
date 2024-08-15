@@ -433,7 +433,7 @@ void Board::Dslack(string dname, float &NS, int x, int y) {
 			y2 += c.getY();
 		}
 		int WL1 = abs(x1 - x2) + abs(y1 - y2);
-		int WL2 = abs(x - x2) - abs(y - y2);
+		int WL2 = abs(x - x2) + abs(y - y2);
 		float WL = (float) WL1 - WL2;
 		NS = WL * DisplacementDelay;
 	}
