@@ -12,6 +12,19 @@ Legalization::Legalization(Board board) {
 	for (auto& it : board.PlacementRows) {
 		placementRows.push_back(placementRow(it.first.first, it.first.second, it.second.at(0), it.second.at(1), it.second.at(2)));
 	}
+	siteWidth = placementRows.at(0).siteWidth; //510
+	siteHeight = placementRows.at(0).siteHeight; //2100
+	placementRowLLX = placementRows.at(0).startx; //15300
+	placementRowLLY = placementRows.at(0).starty; //16800
+	placementRowURX = placementRows.at(0).startx + placementRows.at(0).siteWidth * placementRows.at(0).numSites; //1284690
+	placementRowURY = placementRows.at(placementRows.size() - 1).starty + placementRows.at(placementRows.size() - 1).siteHeight; //1285200
+	maxHorizontalDisplacement = 10;
+	maxVerticalDisplacement = 4;
+	maxFailedHorizontalDisplacement = 50;
+	maxFailedVerticalDisplacement = 50;
+	siteHorizontal = placementRows.at(0).numSites;
+	siteVertical = placementRows.size();
+	grids.resize(siteHorizontal, vector<bool>(siteVertical));
 }
 Legalization::~Legalization() {}
 void Legalization::legalize(Board& board) {
@@ -28,6 +41,32 @@ void Legalization::initializeBins() {
 	for(int i = 0; i < numBinsHorizontal; i++) {
 		for(int j = 0; j < numBinsVertical; j++) {
 			bins.at(i).at(j) = bin(i * BinWidth, j * BinHeight);
+			if (bins.at(i).at(j).x <= placementRowLLX) {
+				bins.at(i).at(j).siteLLX = placementRowLLX;
+			}
+			else {
+				int siteBefore = (bins.at(i).at(j).x - placementRowLLX + siteWidth - 1) / siteWidth;
+				bins.at(i).at(j).siteLLX = placementRowLLX + siteBefore * siteWidth;
+			}
+			if (bins.at(i).at(j).x + BinWidth >= placementRowURX) {
+				bins.at(i).at(j).siteHorizontal = (placementRowURX - bins.at(i).at(j).siteLLX) / siteWidth;
+			}
+			else {
+				bins.at(i).at(j).siteHorizontal = (bins.at(i).at(j).x + BinWidth - bins.at(i).at(j).siteLLX) / siteWidth;
+			}
+			if (bins.at(i).at(j).y <= placementRowLLY) {
+				bins.at(i).at(j).siteLLY = placementRowLLY;
+			}
+			else {
+				int siteBefore = (bins.at(i).at(j).y - placementRowLLY + siteHeight - 1) / siteHeight;
+				bins.at(i).at(j).siteLLY = placementRowLLY + siteBefore * siteHeight;
+			}
+			if (bins.at(i).at(j).y + BinHeight >= placementRowURY) {
+				bins.at(i).at(j).siteVertical = (placementRowURY - bins.at(i).at(j).siteLLY) / siteHeight;
+			}
+			else {
+				bins.at(i).at(j).siteVertical = (bins.at(i).at(j).y + BinHeight - bins.at(i).at(j).siteLLY) / siteHeight;
+			}
 		}
 	}
 }
@@ -75,7 +114,7 @@ void Legalization::findOverfilledBins() {
 		for (int j = 0; j < numBinsVertical; j++) {
 			if (bins.at(i).at(j).density >= BinMaxUtil) {
 				overfilledBins.push_back(bins.at(i).at(j));
-				vector<bin> temp;
+				vector<bin&> temp;
 				if (i != 0 && bins.at(i - 1).at(j).density < BinMaxUtil) {
 					temp.push_back(bins.at(i - 1).at(j));
 				}
@@ -146,19 +185,19 @@ void Legalization::cellSpreading(Board& board) {
 			for (auto& it : targetBins[i]) {
 				int movedArea = cs.getFlow(binToIndex[overfilledBins[i]], binToIndex[it]);
 				if (movedArea > 0) {
-					vector<string> names = findNearestCells(board, overfilledBins[i], it, movedArea);
+					vector<int> names = findNearestCells(board, overfilledBins[i], it, movedArea);
 					moveCells(board, overfilledBins[i], it, names);
 				}
 			}
 		}
 	}
 }
-vector<string> Legalization::findNearestCells(Board& board, bin& from, bin& to, int targetArea) {
+vector<int> Legalization::findNearestCells(Board& board, bin& from, bin& to, int targetArea) {
 	int targetBinX = to.x + BinWidth / 2;
 	int targetBinY = to.y + BinHeight / 2;
 
 	struct cell {
-		string name;
+		int name;
 		int area;
 		int distance;
 	};
@@ -169,7 +208,7 @@ vector<string> Legalization::findNearestCells(Board& board, bin& from, bin& to, 
 		int y = board.InstToFlipFlop.at(it).getY();
 		int width = board.InstToFlipFlop.at(it).getWidth();
 		int height = board.InstToFlipFlop.at(it).getHeight();
-		string name = board.InstToFlipFlop.at(it).getInstName();
+		int name = board.InstToFlipFlop.at(it).getInstNum();
 		int area = board.InstToFlipFlop.at(it).getArea();
 		int distance = abs(targetBinX - (x + width / 2)) + abs(targetBinY - (y + height / 2));
 		cells.push_back({ name,area,distance });
@@ -178,7 +217,7 @@ vector<string> Legalization::findNearestCells(Board& board, bin& from, bin& to, 
 		return a.distance < b.distance;
 		});
 	int area = 0;
-	vector<string> nearestCells;
+	vector<int> nearestCells;
 	for (const auto& it : cells) {
 		nearestCells.push_back(it.name);
 		area += it.area;
@@ -189,7 +228,7 @@ vector<string> Legalization::findNearestCells(Board& board, bin& from, bin& to, 
 
 	return nearestCells;
 }
-void Legalization::moveCells(Board& board, bin& from, bin& to, vector<string> names) {
+void Legalization::moveCells(Board& board, bin& from, bin& to, vector<int> names) {
 	for (auto& it : from.flipflops) {
 		if (find(names.begin(), names.end(), it) != names.end()) {
 			int x = board.InstToFlipFlop.at(it).getX();
@@ -207,5 +246,221 @@ void Legalization::moveCells(Board& board, bin& from, bin& to, vector<string> na
 	}
 }
 void Legalization::parallelLegalization(Board& board) {
+	//parallel legalization
+	//vector<thread> threads;
+	//for (auto& it : overfilledBins) {
+	//	threads.push_back(thread([this, &board, it]() {
+	//		vector<string> names;
+	//		for (auto& it2 : it.flipflops) {
+	//			names.push_back(it2);
+	//		}
+	//		for (auto& it2 : it.gates) {
+	//			names.push_back(it2);
+	//		}
+	//		for (auto& it2 : names) {
+	//			int x = board.InstToFlipFlop.at(it2).getX();
+	//			int y = board.InstToFlipFlop.at(it2).getY();
+	//			int targetBinX1 = it.x; //target bin's lower left corner
+	//			int targetBinY1 = it.y;
+	//			int targetBinX2 = it.x + BinWidth; //target bin's upper right corner
+	//			int targetBinY2 = it.y + BinHeight;
+	//			x = min(max(x, targetBinX1), targetBinX2);
+	//			y = min(max(y, targetBinY1), targetBinY2);
+	//			board.InstToFlipFlop.at(it2).setPos(x, y); //move cell to the closest position inside the target bin
+	//		}
+	//		}));
+	//}
+	//for (auto& it : threads) {
+	//	it.join();
+	//}
+	 
+	 
+	 
+	for (auto& it : bins) {
+		for (auto& it2 : it) {
+			legalizationInBin(board, it2);
+		}
+	}
+	if (placeFailedFlipFlops.size() != 0) {
+		replaceFailedFFs(board);
+	}
+}
+void  Legalization::legalizationInBin(Board& board, bin& bin) {
+	bin.sites.resize(bin.siteHorizontal, vector<int>(bin.siteVertical));
+	//mark the site occupied by the gate as 1
+	for (auto& it : bin.gates) {
+		int x = board.InstToGate.at(it).getX();
+		int y = board.InstToGate.at(it).getY();
+		int width = board.InstToGate.at(it).getWidth();
+		int height = board.InstToGate.at(it).getHeight();
+		int gateLLXSite = (x - bin.siteLLX) / siteWidth;
+		int gateLLYSite = (y - bin.siteLLY) / siteHeight;
+		int gateURXSite = (x + width - bin.siteLLX) / siteWidth;
+		int gateURYSite = (y + height - bin.siteLLY) / siteHeight;
+		for (int i = gateLLXSite; i < gateURXSite; i++) {
+			for (int j = gateLLYSite; j < gateURYSite; j++) {
+				bin.sites.at(i).at(j) = 1;
+				int x1 = (bin.siteLLX - placementRowLLX) / siteWidth + i;
+				int y1 = (bin.siteLLY - placementRowLLY) / siteHeight + j;
+				grids.at(x1).at(y1) = 1;
+			}
+		}
+	}
+	vector<pair<int, int>> priority; //priority, flipflop index
+	for (auto& it : bin.flipflops) {
+		int p = board.InstToFlipFlop.at(it).getArea() / (siteWidth * siteHeight);
+		priority.push_back(make_pair(p, it));
+		sort(priority.begin(), priority.end(), [](const pair<int, int>& a, const pair<int, int>& b) {
+			return a.first > b.first;
+			});
+	}
+	for (auto& it : priority) {
+		int x = board.InstToFlipFlop.at(it.second).getX();
+		int y = board.InstToFlipFlop.at(it.second).getY();
+		int width = board.InstToFlipFlop.at(it.second).getWidth();
+		int height = board.InstToFlipFlop.at(it.second).getHeight();
 
+		int flipflopLLSiteX = (x - bin.siteLLX) / siteWidth;
+		int flipflopLLSiteY = (y - bin.siteLLY) / siteHeight;
+		int flipflopURSiteX = (x + width - bin.siteLLX) / siteWidth; //upper right site (won't occupy)
+		int flipflopURSiteY = (y + height - bin.siteLLY) / siteHeight;
+
+		//find the nearest legal site
+		if (isLegalInBin(bin, flipflopLLSiteX, flipflopLLSiteY, flipflopURSiteX, flipflopURSiteY)) {
+			//move the flipflop to the site
+			board.InstToFlipFlop.at(it.second).setPos(bin.siteLLX + flipflopLLSiteX * siteWidth, bin.siteLLY + flipflopLLSiteY * siteHeight);
+			//mark the site occupied by the flipflop as 1
+			for (int i = flipflopLLSiteX; i < flipflopURSiteX; i++) {
+				for (int j = flipflopLLSiteY; j < flipflopURSiteY; j++) {
+					bin.sites.at(i).at(j) = 1;
+					int x1 = (bin.siteLLX - placementRowLLX) / siteWidth + i;
+					int y1 = (bin.siteLLY - placementRowLLY) / siteHeight + j;
+					grids.at(x1).at(y1) = 1;
+				}
+			}
+		}
+		else {
+			//find the nearest legal site
+			int targetX = -1;
+			int targetY = -1;
+			int minDistance = INT_MAX;
+			// find legal site in specified range
+			for (int i = flipflopLLSiteX - maxHorizontalDisplacement; i <= flipflopURSiteX + maxHorizontalDisplacement; i++) {
+				for (int j = flipflopLLSiteY - maxVerticalDisplacement; j <= flipflopURSiteY + maxVerticalDisplacement; j++) {
+					if (isLegalInBin(bin, i, j, i + flipflopURSiteX - flipflopLLSiteX, j + flipflopURSiteY - flipflopLLSiteY)) {
+						int distance = abs(i - flipflopLLSiteX) + abs(j - flipflopLLSiteY);
+						if (distance < minDistance) {
+							minDistance = distance;
+							targetX = i;
+							targetY = j;
+						}
+					}
+				}
+			}
+			if (targetX != -1) { //legal site found
+				//move the flipflop to the site
+				int targetX1 = bin.siteLLX + targetX * siteWidth;
+				int targetY1 = bin.siteLLY + targetY * siteHeight;
+				board.InstToFlipFlop.at(it.second).setPos(targetX1, targetY1);
+				//mark the site occupied by the flipflop as 1
+				for (int i = targetX; i < targetX + flipflopURSiteX - flipflopLLSiteX; i++) {
+					for (int j = targetY; j < targetY + flipflopURSiteY - flipflopLLSiteY; j++) {
+						bin.sites.at(i).at(j) = 1;
+						int x1 = (bin.siteLLX - placementRowLLX) / siteWidth + i;
+						int y1 = (bin.siteLLY - placementRowLLY) / siteHeight + j;
+						grids.at(x1).at(y1) = 1;
+					}
+				}
+			}
+			else { //no legal site found
+				placeFailedFlipFlops.push_back({ bin, it.second });
+			}
+		}
+	}
+}
+bool Legalization::isLegalInBin(bin& bin, int flipflopLLSiteX, int flipflopLLSiteY, int flipflopURSiteX, int flipflopURSiteY) {
+	//check if out of boundry
+	if (flipflopLLSiteX < 0 || flipflopLLSiteY < 0 || flipflopURSiteX >= bin.siteHorizontal || flipflopURSiteY >= bin.siteVertical) {
+		return false;
+	}
+	//check if the sites are occupied
+	for (int i = flipflopLLSiteX; i < flipflopURSiteX; i++) {
+		for (int j = flipflopLLSiteY; j < flipflopURSiteY; j++) {
+			if (bin.sites.at(i).at(j) == 1) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+void Legalization::replaceFailedFFs(Board& board) {
+	vector<pair<int, int>> priority;  //priority, flipflop index
+	for (auto& it : placeFailedFlipFlops) {
+		int p = board.InstToFlipFlop.at(it.second).getArea() / (siteWidth * siteHeight);
+		priority.push_back(make_pair(p, it.second));
+		sort(priority.begin(), priority.end(), [](const pair<int, int>& a, const pair<int, int>& b) {
+			return a.first > b.first;
+			});
+	}
+	for (auto& it : priority) {
+		int x = board.InstToFlipFlop.at(it.second).getX();
+		int y = board.InstToFlipFlop.at(it.second).getY();
+		int width = board.InstToFlipFlop.at(it.second).getWidth();
+		int height = board.InstToFlipFlop.at(it.second).getHeight();
+		int flipflopLLSiteX = (x - placementRowLLX) / siteWidth;
+		int flipflopLLSiteY = (y - placementRowLLY) / siteHeight;
+		int flipflopURSiteX = (x + width - placementRowLLX) / siteWidth;
+		int flipflopURSiteY = (y + height - placementRowLLY) / siteHeight;
+		//find the nearest legal site
+		int targetX = -1;
+		int targetY = -1;
+		int minDistance = INT_MAX;
+		// find legal site in specified range
+		for (int i = flipflopLLSiteX - maxFailedHorizontalDisplacement; i <= flipflopURSiteX + maxFailedHorizontalDisplacement; i++) {
+			for (int j = flipflopLLSiteY - maxFailedVerticalDisplacement; j <= flipflopURSiteY + maxFailedVerticalDisplacement; j++) {
+				if (isLegalInRegion(i, j, i + flipflopURSiteX - flipflopLLSiteX, j + flipflopURSiteY - flipflopLLSiteY)) {
+					int distance = abs(i - flipflopLLSiteX) + abs(j - flipflopLLSiteY);
+					if (distance < minDistance) {
+						minDistance = distance;
+						targetX = i;
+						targetY = j;
+					}
+				}
+			}
+		}
+		if (targetX != -1) { //legal site found
+			//move the flipflop to the site
+			int targetX1 = placementRowLLX + targetX * siteWidth;
+			int targetY1 = placementRowLLY + targetY * siteHeight;
+			board.InstToFlipFlop.at(it.second).setPos(targetX1, targetY1);
+			//mark the site occupied by the flipflop as 1
+			for (int i = targetX; i < targetX + flipflopURSiteX - flipflopLLSiteX; i++) {
+				for (int j = targetY; j < targetY + flipflopURSiteY - flipflopLLSiteY; j++) {
+					bins.at(i).at(j).sites.at(i).at(j) = 1;
+				}
+			}
+			priority.erase(remove(priority.begin(), priority.end(), it), priority.end()); //remove the flipflop from the priority list
+		}
+	}
+	if (!priority.empty()) {
+		cout << "Failed to replace the following flipflops: ";
+		for (auto& it : priority) {
+			cout << it.second << " ";
+		}
+	}
+}
+bool Legalization::isLegalInRegion(int flipflopLLSiteX, int flipflopLLSiteY, int flipflopURSiteX, int flipflopURSiteY) {
+	//check if out of boundry
+	if (flipflopLLSiteX < 0 || flipflopLLSiteY < 0 || flipflopURSiteX >= siteHorizontal || flipflopURSiteY >= siteVertical) {
+		return false;
+	}
+	//check if the sites are occupied
+	for (int i = flipflopLLSiteX; i < flipflopURSiteX; i++) {
+		for (int j = flipflopLLSiteY; j < flipflopURSiteY; j++) {
+			if (grids.at(i).at(j) == 1) {
+				return false;
+			}
+		}
+	}
+	return true;
 }
