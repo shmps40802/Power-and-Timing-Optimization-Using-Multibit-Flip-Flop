@@ -6,6 +6,8 @@
 #include <unordered_map>
 #include <set>
 #include <thread>
+#include <mutex>
+#include <functional>
 #include "Board.h"
 #include "CellSpreading.h"
 using namespace std;
@@ -76,10 +78,11 @@ private:
 	int maxFailedVerticalDisplacement; //maximum failed flipflop vertical displacement of the cells (counted in sites)
 	vector<vector<bin>> bins;
 	vector<placementRow> placementRows;
-	vector<bin&> overfilledBins;
-	vector<vector<bin&>> targetBins;
-	vector<pair<bin&, int>> placeFailedFlipFlops; //bin, flipflop index
+	vector<reference_wrapper<bin>> overfilledBins;
+	vector<vector<reference_wrapper<bin>>> targetBins;
+	vector<pair<reference_wrapper<bin>, int>> placeFailedFlipFlops; //bin, flipflop index
 	vector<vector<bool>> grids; //0: empty, 1: occupied
+	mutex mtx;
 public:
 	Legalization(Board);
 	~Legalization();
