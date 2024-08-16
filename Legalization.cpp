@@ -67,6 +67,7 @@ void Legalization::initializeBins() {
 			else {
 				bins.at(i).at(j).siteVertical = (bins.at(i).at(j).y + BinHeight - bins.at(i).at(j).siteLLY) / siteHeight;
 			}
+			bins.at(i).at(j).sites.resize(bins.at(i).at(j).siteHorizontal, vector<int>(bins.at(i).at(j).siteVertical));
 		}
 	}
 }
@@ -114,7 +115,7 @@ void Legalization::findOverfilledBins() {
 		for (int j = 0; j < numBinsVertical; j++) {
 			if (bins.at(i).at(j).density >= BinMaxUtil) {
 				overfilledBins.push_back(bins.at(i).at(j));
-				vector<bin&> temp;
+				vector<reference_wrapper<bin>> temp;
 				if (i != 0 && bins.at(i - 1).at(j).density < BinMaxUtil) {
 					temp.push_back(bins.at(i - 1).at(j));
 				}
@@ -136,7 +137,8 @@ void Legalization::cellSpreading(Board& board) {
 	set<bin> targetBinsInNetwork; //set of target bins that are in the network
 	for (auto& it : targetBins) {
 		for (auto& it2 : it) {
-			targetBinsInNetwork.insert(it2);
+			bin temp = it2.get();
+			targetBinsInNetwork.insert(temp);
 		}
 	}
 	unordered_map<int, bin> indexToBin;
@@ -145,8 +147,9 @@ void Legalization::cellSpreading(Board& board) {
 		int index = 2;
 		//index 0 is super source, index 1 is super target
 		for (auto& it : overfilledBins) {
-			indexToBin[index] = it;
-			binToIndex[it] = index;
+			bin temp = it.get();
+			indexToBin[index] = temp;
+			binToIndex[temp] = index;
 			index++;
 		}
 		for (auto& it : targetBinsInNetwork) {
@@ -159,16 +162,16 @@ void Legalization::cellSpreading(Board& board) {
 		//budgeting
 		//first two columns
 		for (auto& it : overfilledBins) {
-			int capacity = (it.density - BinMaxUtil + 0.01) * BinArea; //movedOutArea
+			int capacity = (it.get().density - BinMaxUtil + 0.01) * BinArea; //movedOutArea
 			int cost = 0;
-			cs.addedge(0, binToIndex[it], capacity, cost);
+			cs.addedge(0, binToIndex[it.get()], capacity, cost);
 		}
 		//middle two columns
 		for (int i = 0; i < overfilledBins.size(); i++) {
 			for (auto& it : targetBins[i]) {
 				int capacity = INT_MAX;
-				int cost = abs(overfilledBins[i].x - it.x) + abs(overfilledBins[i].y - it.y); //bin-wise displacement
-				cs.addedge(binToIndex[overfilledBins[i]], binToIndex[it], capacity, cost);
+				int cost = abs(overfilledBins[i].get().x - it.get().x) + abs(overfilledBins[i].get().y - it.get().y); //bin-wise displacement
+				cs.addedge(binToIndex[overfilledBins[i].get()], binToIndex[it.get()], capacity, cost);
 			}
 		}
 		//last two columns
@@ -183,10 +186,10 @@ void Legalization::cellSpreading(Board& board) {
 		//boundry cell moving
 		for (int i = 0; i < overfilledBins.size(); i++) {
 			for (auto& it : targetBins[i]) {
-				int movedArea = cs.getFlow(binToIndex[overfilledBins[i]], binToIndex[it]);
+				int movedArea = cs.getFlow(binToIndex[overfilledBins[i].get()], binToIndex[it.get()]);
 				if (movedArea > 0) {
-					vector<int> names = findNearestCells(board, overfilledBins[i], it, movedArea);
-					moveCells(board, overfilledBins[i], it, names);
+					vector<int> names = findNearestCells(board, overfilledBins[i].get(), it.get(), movedArea);
+					moveCells(board, overfilledBins[i].get(), it.get(), names);
 				}
 			}
 		}
@@ -246,47 +249,43 @@ void Legalization::moveCells(Board& board, bin& from, bin& to, vector<int> names
 	}
 }
 void Legalization::parallelLegalization(Board& board) {
-	//parallel legalization
-	//vector<thread> threads;
-	//for (auto& it : overfilledBins) {
-	//	threads.push_back(thread([this, &board, it]() {
-	//		vector<string> names;
-	//		for (auto& it2 : it.flipflops) {
-	//			names.push_back(it2);
-	//		}
-	//		for (auto& it2 : it.gates) {
-	//			names.push_back(it2);
-	//		}
-	//		for (auto& it2 : names) {
-	//			int x = board.InstToFlipFlop.at(it2).getX();
-	//			int y = board.InstToFlipFlop.at(it2).getY();
-	//			int targetBinX1 = it.x; //target bin's lower left corner
-	//			int targetBinY1 = it.y;
-	//			int targetBinX2 = it.x + BinWidth; //target bin's upper right corner
-	//			int targetBinY2 = it.y + BinHeight;
-	//			x = min(max(x, targetBinX1), targetBinX2);
-	//			y = min(max(y, targetBinY1), targetBinY2);
-	//			board.InstToFlipFlop.at(it2).setPos(x, y); //move cell to the closest position inside the target bin
-	//		}
-	//		}));
-	//}
-	//for (auto& it : threads) {
-	//	it.join();
-	//}
-	 
-	 
-	 
-	for (auto& it : bins) {
-		for (auto& it2 : it) {
-			legalizationInBin(board, it2);
+
+
+
+	const int numThreads = 4;
+	int binsPerThread = bins.size() / numThreads;
+	int remainder = bins.size() % numThreads;
+	vector<thread> threads;
+
+	//assign work to each thread
+	auto worker = [&](int start, int end) {
+		for (int i = start; i < end; i++) {
+			for (auto& it2 : bins[i]) {
+				legalizationInBin(board, it2);
+			}
 		}
+	};
+	int startIndex = 0;
+	for (int i = 0; i < numThreads; i++) {
+		int endIndex = startIndex + binsPerThread + (i < remainder ? 1 : 0);
+		threads.emplace_back(worker, startIndex, endIndex);
+		startIndex = endIndex;
 	}
+	//wait for all threads to finish
+	for (auto& t : threads) {
+		t.join();
+	}
+
+	//for (auto& it : bins) {
+	//	for (auto& it2 : it) {
+	//		legalizationInBin(board, it2);
+	//	}
+	//}
 	if (placeFailedFlipFlops.size() != 0) {
 		replaceFailedFFs(board);
 	}
 }
 void  Legalization::legalizationInBin(Board& board, bin& bin) {
-	bin.sites.resize(bin.siteHorizontal, vector<int>(bin.siteVertical));
 	//mark the site occupied by the gate as 1
 	for (auto& it : bin.gates) {
 		int x = board.InstToGate.at(it).getX();
@@ -302,7 +301,10 @@ void  Legalization::legalizationInBin(Board& board, bin& bin) {
 				bin.sites.at(i).at(j) = 1;
 				int x1 = (bin.siteLLX - placementRowLLX) / siteWidth + i;
 				int y1 = (bin.siteLLY - placementRowLLY) / siteHeight + j;
-				grids.at(x1).at(y1) = 1;
+				{
+					lock_guard<mutex> lock(mtx); //lock the section
+					grids.at(x1).at(y1) = 1;
+				}
 			}
 		}
 	}
@@ -335,7 +337,10 @@ void  Legalization::legalizationInBin(Board& board, bin& bin) {
 					bin.sites.at(i).at(j) = 1;
 					int x1 = (bin.siteLLX - placementRowLLX) / siteWidth + i;
 					int y1 = (bin.siteLLY - placementRowLLY) / siteHeight + j;
-					grids.at(x1).at(y1) = 1;
+					{
+						lock_guard<mutex> lock(mtx); //lock the section
+						grids.at(x1).at(y1) = 1;
+					}
 				}
 			}
 		}
@@ -368,12 +373,18 @@ void  Legalization::legalizationInBin(Board& board, bin& bin) {
 						bin.sites.at(i).at(j) = 1;
 						int x1 = (bin.siteLLX - placementRowLLX) / siteWidth + i;
 						int y1 = (bin.siteLLY - placementRowLLY) / siteHeight + j;
-						grids.at(x1).at(y1) = 1;
+						{
+							lock_guard<mutex> lock(mtx); //lock the section
+							grids.at(x1).at(y1) = 1;
+						}
 					}
 				}
 			}
 			else { //no legal site found
-				placeFailedFlipFlops.push_back({ bin, it.second });
+				{
+					lock_guard<mutex> lock(mtx); //lock the section
+					placeFailedFlipFlops.push_back({ bin, it.second });
+				}
 			}
 		}
 	}
