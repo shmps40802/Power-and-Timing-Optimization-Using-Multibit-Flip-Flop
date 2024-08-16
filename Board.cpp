@@ -44,6 +44,21 @@ void sort(map<string, FlipFlop>& M) {
 	}
 	sort(A.begin(), A.end(), ffComp);
 }
+string nshift(string pin, int n) {
+	string res;
+	string tmp = pin.substr(1);
+	int i = 0;
+	if (tmp != "") {
+		i = stoi(tmp);
+	}
+	if (pin.substr(0, 1) == "D") {
+		res = "D" + to_string(n + i);
+	}
+	else if (pin.substr(0, 1) == "Q") {
+		res = "Q" + to_string(n + i);
+	}
+	return res;
+}
 Board::Board() {
 	CellNumber = 1;
 	maxBit = 1;
@@ -211,7 +226,7 @@ void Board::ReadFile(void) {
 		}
 	}
 	fin.close();
-	/*ifstream fin2;
+	ifstream fin2;
 	fin2.open("connect.txt");
 	string Q, in, D;
 	int WL;
@@ -230,29 +245,20 @@ void Board::ReadFile(void) {
 		Qconnect[Q].insert(D);
 		Ddelay[D][Q] = make_pair(WL * DisplacementDelay + qdelay, in);
 	}
-	fin2.close();*/
+	fin2.close();
 }
 void Board::Display(void) {
 	ofstream fout;
 	fout.open("check.txt");
-	for (auto& it : Net) {
-		fout << it.first << " ";
-		for (auto& it2 : it.second) {
-			fout << it2 << " ";
-		}
-		fout << "\n";
-	}
 	for (auto& it : Ddelay) {
 		for (auto& it2 : it.second) {
 			fout << it.first << " " << it2.first << " " << it2.second.first << " " << it2.second.second << "\n";
 		}
 	}
 	for (auto& it : Qconnect) {
-		fout << it.first << " ";
 		for (auto& it2 : it.second) {
-			fout << it2 << " ";
+			fout << it.first << " " << it2 << "\n";
 		}
-		fout << "\n";
 	}
 	fout.close();
 	system("pause");
@@ -519,6 +525,7 @@ void Board::updateQSlack(string qname, int x, int y, float dq) {
 	}
 }
 void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
+	//Display();
 	string FlipFlopName = "C" + to_string(CellNumber);
 	NewFlipFlop.insert(CellNumber);
 	F2.setInstNum(CellNumber);
@@ -558,15 +565,29 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 				int fy = InstToFlipFlop[CellNumber].getY() + curPin[d].y;
 				updateDSlack(prev, dWL, fx, fy);
 				InstToFlipFlop[CellNumber].setSlack(curPin[d].name, NS - DisplacementDelay * dWL);
+				int cnum1 = f.getInstNum();
 				auto tmp = Ddelay[prev];
 				for (auto& it : tmp) {
+					string qname;
+					string in;
 					if (it.second.second == prev) {
-						Ddelay[cur][it.first] = make_pair(it.second.first + DisplacementDelay * dWL, cur);
+						in = cur;
 					}
 					else {
-						Ddelay[cur][it.first] = make_pair(it.second.first + DisplacementDelay * dWL, it.second.second);
+						in = it.second.second;
 					}
-					Qconnect[it.first].insert(cur);
+					size_t pos2 = it.first.find("/");
+					int cnum2 = stoi(it.first.substr(1, pos2));
+					if (cnum1 == cnum2) {
+						string tmp2 = nshift(it.first.substr(pos2 + 1, string::npos), w);
+						if (F2.getN() == 1) tmp2 = "Q";
+						qname = FlipFlopName + "/" + tmp2;
+					}
+					else {
+						qname = it.first;
+					}
+					Ddelay[cur][qname] = make_pair(it.second.first + DisplacementDelay * dWL, in);
+					Qconnect[qname].insert(cur);
 					Ddelay[prev].erase(it.first);
 					Qconnect[it.first].erase(prev);
 				}
@@ -588,11 +609,30 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 				int fy = InstToFlipFlop[CellNumber].getY() + curPin[q].y;
 				float dq = F2.getQpinDelay() - f.getQpinDelay();
 				updateQSlack(prev, fx, fy, dq);
+				int cnum1 = f.getInstNum();
 				auto tmp = Qconnect[prev];
 				for (auto& it : tmp) {
-					Qconnect[cur].insert(it);
+					string dname;
+					string in;
+					size_t pos2 = it.find("/");
+					int cnum2 = stoi(it.substr(1, pos2));
+					if (cnum1 == cnum2) {
+						string tmp2 = nshift(it.substr(it.find("/") + 1, string::npos), w);
+						if (F2.getN() == 1) tmp2 = "D";
+						dname = FlipFlopName + "/" + tmp2;
+					}
+					else {
+						dname = it;
+					}
+					Qconnect[cur].insert(dname);
 					pair<float, string> tmp2 = Ddelay[it][prev];
-					Ddelay[it][cur] = make_pair(tmp2.first, tmp2.second);
+					if (tmp2.second == it) {
+						in = dname;
+					}
+					else {
+						in = tmp2.second;
+					}
+					Ddelay[dname][cur] = make_pair(tmp2.first, in);
 					Qconnect[prev].erase(it);
 					Ddelay[it].erase(prev);
 				}
@@ -630,6 +670,7 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 	}
 	F2 = InstToFlipFlop[CellNumber];
 	CellNumber++;
+	if (F1[0].getInstName() == "C102280")Display();
 }
 void Board::Debanking(FlipFlop F1, vector<FlipFlop>& F2) {
 	vector<Point> prevPin = F1.getPin();
