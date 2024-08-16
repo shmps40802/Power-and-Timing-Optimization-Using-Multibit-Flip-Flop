@@ -48,41 +48,6 @@ Board::Board() {
 	CellNumber = 1;
 	maxBit = 1;
 	ReadFile();
-	/*for (auto& f : InstToFlipFlop) {
-		for (auto& p : f.second.getPin()) {
-			if (p.type == 'D') {
-				DWL["C" + to_string(f.first) + "/" + p.name] = FLT_MAX;
-			}
-		}
-	}
-	vector<thread> threads;
-	vector<string> keys;
-    vector<float> values;
-	for (auto& f : InstToFlipFlop) {
-		for (auto& p : f.second.getPin()) {
-			if (p.type != 'D') continue;
-			keys.push_back("C" + to_string(f.first) + "/" + p.name);
-			values.push_back(f.second.getSlack()[p.name]);
-		}
-    }
-	vector<map<string,bool>> myMap(keys.size());
-	vector<bool> flag(keys.size(), 0);
-	for (size_t i = 0; i < keys.size(); i++) {
-		threads.emplace_back(&Board::addWL, this, keys[i], ref(myMap[i]), values[i], flag[i]);
-	}
-    for (auto& t : threads) {
-		t.join();
-    }*/
-	/*int t = 0;
-	for (auto& f : InstToFlipFlop) {
-		for (auto& p : f.second.getPin()) {
-			if (p.type != 'D') continue;
-			t++;
-			cout << t << " C" << f.first << "\n";
-			map<string, bool> visited;
-			addWL(f.second.getInstName() + "/" + p.name, visited, f.second.getSlack()[p.name], 0);
-		}
-	}*/
 }
 Board::~Board() {}
 void Board::ReadFile(void) {
@@ -203,13 +168,6 @@ void Board::ReadFile(void) {
 				tmp2.push_back(stoi(PinName.substr(1, pos)));
 			}
 		}
-		/*for (auto& it1 : tmp) {
-			for (auto& it2 : tmp) {
-				if (it1 != it2) {
-					addNeighbor(it1, it2);
-				}
-			}
-		}*/
 		if (!tmp2.empty())FlipFlopByClk.push_back(tmp2);
 	}
 	fin >> Str >> BinWidth;
@@ -503,14 +461,12 @@ void Board::updateDSlack(string dname, float& dWL, int x, int y) {
 	int netnum = PointToNet[dname];
 	for (auto& it : Net[netnum]) {
 		if (it.find("D") != end || it.find("/IN") != end || it.find("OUTPUT") != end) continue;
-		//cout << "D0\n";
 		Point tmp = NametoPoint(it);
 		int x2 = tmp.x;
 		int y2 = tmp.y;
 		size_t pos2 = it.find("/");
 		if (pos2 != string::npos) {
 			int cnum2 = stoi(it.substr(1, pos2));
-			//cout << "D1\n";
 			Cell F2 = getCell(cnum2);
 			x2 += F2.getX();
 			y2 += F2.getY();
@@ -1055,37 +1011,12 @@ float Board::Cost() {
 int Board::getInstsize() {
 	return (int) InstToFlipFlop.size();
 }
-/*void Board::addNeighbor(string p1, string p2) {
-	auto end = string::npos;
-	if (p1.find("INPUT") != end || p1.find("/OUT") != end || p1.find("Q") != end) {
-		if (p2.find("OUTPUT") != end || p2.find("/IN") != end || p2.find("D") != end) {
-			Net2[p1].insert(p2);
-			Net2[p2].insert(p1);
-		}
-	}
-	else if (p2.find("INPUT") != end || p2.find("/OUT") != end || p2.find("Q") != end) {
-		if (p1.find("OUTPUT") != end || p1.find("/IN") != end || p1.find("D") != end) {
-			Net2[p1].insert(p2);
-			Net2[p2].insert(p1);
-		}
-	}
-}
-void Board::removeNeighbor(string p1, string p2) {
-	Net2[p1].erase(p2);
-	Net2[p2].erase(p1);
-}*/
 void Board::setDelay(string Q, string in, string D, int WL) {
 	auto end = string::npos;
-	/*size_t pos1 = D.find("/");
-	int cnum1 = stoi(D.substr(1, pos1));
-	string dname = D.substr(pos1 + 1, end);
-	float slack = InstToFlipFlop[cnum1].getSlack()[dname];*/
 	size_t pos2 = Q.find("/");
 	int cnum2 = stoi(Q.substr(1, pos2));
 	string qname = Q.substr(pos2 + 1, end);
 	float delay = InstToFlipFlop[cnum2].getQpinDelay() + WL * DisplacementDelay;
-	//InstToFlipFlop[cnum2].setQconnect(qname, D);
-	//InstToFlipFlop[cnum1].setDWL(dname, Q, delay, in);
 	Qconnect[Q].insert(D);
 	Ddelay[D][Q] = make_pair(delay, in);
 }
