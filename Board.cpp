@@ -59,6 +59,11 @@ string nshift(string pin, int n) {
 	}
 	return res;
 }
+bool isIn(string s) {
+	auto end = string::npos;
+	if (s.find("INPUT") != end || s.find("/OUT") != end || s.find("Q") != end) return true;
+	else return false;
+}
 Board::Board() {
 	CellNumber = 1;
 	maxBit = 1;
@@ -170,17 +175,21 @@ void Board::ReadFile(void) {
 		string PinName;
 		fin >> Str >> name >> n;
 		int netnum = stoi(name.substr(3));
-		unordered_set<string> tmp;
+		vector<string> tmp;
 		vector<int> tmp2;
 		for (int j = 0; j < n; j++) {
 			fin >> Str >> PinName;
 			auto end = string::npos;
 			size_t pos = PinName.find("/");
 			addNet(netnum, PinName);
-			tmp.insert(PinName);
-			addNet(netnum, PinName);
+			tmp.push_back(PinName);
 			if (PinName.find("CLK") != end) {
 				tmp2.push_back(stoi(PinName.substr(1, pos)));
+			}
+		}
+		for (size_t j = 0; j < tmp.size() - 1; j++) {
+			for (size_t k = j + 1; k < tmp.size(); k++) {
+				addNet2(tmp[j], tmp[k]);
 			}
 		}
 		if (!tmp2.empty())FlipFlopByClk.push_back(tmp2);
@@ -385,9 +394,9 @@ void Board::Dslack(string dname, float &NS, int x, int y) {
 	Point p1 = NametoPoint(dname);
 	int x1 = p1.x + f.getX();
 	int y1 = p1.y + f.getY();
-	int netnum = PointToNet[dname];
-	for (auto& it : Net[netnum]) {
-		if (it.find("D") != end || it.find("/IN") != end || it.find("OUTPUT") != end) continue;
+	//int netnum = PointToNet[dname];
+	for (auto& it : Net2[dname]) {
+		//if (it.find("D") != end || it.find("/IN") != end || it.find("OUTPUT") != end) continue;
 		size_t pos2 = it.find("/");
 		Point p2 = NametoPoint(it);
 		int x2 = p1.x;
@@ -464,9 +473,9 @@ void Board::updateDSlack(string dname, float& dWL, int x, int y) {
 	Point p1 = NametoPoint(dname);
 	int x1 = p1.x + f.getX();
 	int y1 = p1.y + f.getY();
-	int netnum = PointToNet[dname];
-	for (auto& it : Net[netnum]) {
-		if (it.find("D") != end || it.find("/IN") != end || it.find("OUTPUT") != end) continue;
+	//int netnum = PointToNet[dname];
+	for (auto& it : Net2[dname]) {
+		//if (it.find("D") != end || it.find("/IN") != end || it.find("OUTPUT") != end) continue;
 		Point tmp = NametoPoint(it);
 		int x2 = tmp.x;
 		int y2 = tmp.y;
@@ -657,6 +666,11 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 			int netnum = PointToNet[prev];
 			addNet(netnum, cur);
 			removeNet(netnum, prev);
+			auto tmp = Net2[prev];
+			for (auto& it : tmp) {
+				addNet2(it, cur);
+				removeNet2(it, prev);
+			}
 		}
 		// delete cell from location
 		int fx = f.getX();
@@ -671,7 +685,6 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 	}
 	F2 = InstToFlipFlop[CellNumber];
 	CellNumber++;
-	if (F1[0].getInstName() == "C102280")Display();
 }
 void Board::Debanking(FlipFlop F1, vector<FlipFlop>& F2) {
 	vector<Point> prevPin = F1.getPin();
@@ -1061,4 +1074,29 @@ void Board::setDelay(string Q, string in, string D, int WL) {
 	float delay = InstToFlipFlop[cnum2].getQpinDelay() + WL * DisplacementDelay;
 	Qconnect[Q].insert(D);
 	Ddelay[D][Q] = make_pair(delay, in);
+}
+void Board::addNet2(string s1, string s2) {
+	auto end = string::npos;
+	if (isIn(s1) && !isIn(s2)) {
+		Net2[s1].insert(s2);
+		Net2[s2].insert(s1);
+	}
+	else if (isIn(s2) && !isIn(s1)) {
+		Net2[s2].insert(s1);
+		Net2[s1].insert(s2);
+	}
+}
+void Board::removeNet2(string s1, string s2) {
+	if (Net2[s1].find(s2) != Net2[s1].end()) {
+		Net2[s1].erase(s2);
+	}
+	else {
+		cout << s1 << " to " << s2 << " not exist\n";
+	}
+	if (Net2[s2].find(s1) != Net2[s2].end()) {
+		Net2[s2].erase(s1);
+	}
+	else {
+		cout << s2 << " to " << s1 << " not exist\n"; 
+	}
 }
