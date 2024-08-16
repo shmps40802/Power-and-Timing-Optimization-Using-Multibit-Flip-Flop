@@ -514,6 +514,7 @@ void Board::updateQSlack(string qname, int x, int y, float dq) {
 				int WL2 = abs(x - x2) + abs(y - y2);
 				float dWL = (float) WL2 - WL1;
 				delay += dq + dWL * DisplacementDelay;
+				Ddelay[it][qname] = make_pair(delay, f.second.second);
 			}
 			tmp.push_back(delay);
 		}
