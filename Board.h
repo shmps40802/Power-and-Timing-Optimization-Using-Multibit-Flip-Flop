@@ -71,6 +71,7 @@ private:
 	map<int, map<int, float>> BinDensity;              // bin density of board
 	unordered_map<string, unordered_map<string, pair<float, string>>> Ddelay;
 	unordered_map<string, unordered_set<string>> Qconnect;
+	unordered_map<string, unordered_set<string>> Net2; 
 public:
 	Board();
 	~Board();
@@ -80,18 +81,18 @@ public:
 	void Plot();
 	Point NametoPoint(string);
 	Cell getCell(int);                                     // get FlipFlop Gate
-	void addNet(int, string);
-	void removeNet(int, string);
-	void Dslack(string, float&, int, int);
-	void Qslack(string, float&, int, int, float);
-	void updateDSlack(string, float&, int, int);
-	void updateQSlack(string, int, int, float);
+	void addNet(int, string);                              // add pin to the net
+	void removeNet(int, string);                           // remove pin from the net
+	void Dslack(string, float&, int, int);                 // compare slack of D pin
+	void Qslack(string, float&, int, int, float);          // compare slack connect to Q pin
+	void updateDSlack(string, float&, int, int);           // update slack of D pin
+	void updateQSlack(string, int, int, float);            // update slack of D pin connected to Q pin
 	void Banking(vector<FlipFlop>, FlipFlop&);             // only banking 1 bit
 	void Debanking(FlipFlop, vector<FlipFlop>&);           // only debanking into 1 bit
-	float bankingCompare(vector<FlipFlop>, FlipFlop);
-	float singleCompare(FlipFlop, FlipFlop);
-	bool Check();
-	int dist(string, string);
+	float bankingCompare(vector<FlipFlop>, FlipFlop);      // compare flipflop with the same bit(s)
+	float singleCompare(FlipFlop, FlipFlop);               // compare flipflop before and after banking
+	bool Check();                                          // check flipflop whether on grid point or overlapping
+	int dist(string, string);                              // distance between two pins
 	// cost function
 	float TNSCost();
 	float PowerCost();
@@ -102,5 +103,7 @@ public:
 	void setDelay(string, string, string, int);
 	void merge(vector<node>&, int, int, int);
 	void mergeSort(vector<node>&, int, int);
+	void addNet2(string, string);
+	void removeNet2(string, string);
 };
 #endif
