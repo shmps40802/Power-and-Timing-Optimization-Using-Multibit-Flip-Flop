@@ -8,6 +8,7 @@
 #include <thread>
 #include <mutex>
 #include <functional>
+#include <ctime>
 #include "Board.h"
 #include "CellSpreading.h"
 using namespace std;
@@ -84,7 +85,7 @@ private:
 	vector<vector<bool>> grids; //0: empty, 1: occupied
 	mutex mtx;
 public:
-	Legalization(Board);
+	Legalization(Board&);
 	~Legalization();
 	void legalize(Board&);
 	void initializeBins();
