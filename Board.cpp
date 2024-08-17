@@ -1035,3 +1035,6 @@ void Board::removeNet2(string s1, string s2) {
 		cout << s2 << " to " << s1 << " not exist\n"; 
 	}
 }
+void Board::setwl(unordered_map<int, unordered_map<int, vector<int>>> Dcon) {
+	this->Dcon = Dcon;
+}
