@@ -1,6 +1,6 @@
 #include "Legalization.h"
 
-Legalization::Legalization(Board board) {
+Legalization::Legalization(Board& board) {
 	lowerLeftX = board.LowerLeftX;
 	upperRightX = board.HigherRightX;
 	lowerLeftY = board.LowerLeftY;
@@ -28,11 +28,35 @@ Legalization::Legalization(Board board) {
 }
 Legalization::~Legalization() {}
 void Legalization::legalize(Board& board) {
-		initializeBins();
-		cellToBins(board);
-		findOverfilledBins();
-		cellSpreading(board);
-		parallelLegalization(board);
+	clock_t start;
+	double elapsed;
+
+	cout << "start" << endl;
+
+	start = clock();
+	initializeBins();
+	elapsed = double(clock() - start) / CLOCKS_PER_SEC;
+	cout << "initializeBins" << elapsed << " 秒" << endl;
+
+	start = clock();
+	cellToBins(board);
+	elapsed = double(clock() - start) / CLOCKS_PER_SEC;
+	cout << "cellToBins" << elapsed << " 秒" << endl;
+
+	start = clock();
+	findOverfilledBins();
+	elapsed = double(clock() - start) / CLOCKS_PER_SEC;
+	cout << "findOverfilledBins" << elapsed << " 秒" << endl;
+
+	start = clock();
+	cellSpreading(board);
+	elapsed = double(clock() - start) / CLOCKS_PER_SEC;
+	cout << "cellSpreading" << elapsed << " 秒" << endl;
+
+	start = clock();
+	parallelLegalization(board);
+	elapsed = double(clock() - start) / CLOCKS_PER_SEC;
+	cout << "parallelLegalization" << elapsed << " 秒" << endl;
 }
 void Legalization::initializeBins() {
 	int numBinsHorizontal = (upperRightX - lowerLeftX) / BinWidth;
@@ -182,7 +206,7 @@ void Legalization::cellSpreading(Board& board) {
 		}
 
 		cs.MCMF();
-
+		cs.printFlows();
 		//boundry cell moving
 		for (int i = 0; i < overfilledBins.size(); i++) {
 			for (auto& it : targetBins[i]) {
@@ -250,8 +274,6 @@ void Legalization::moveCells(Board& board, bin& from, bin& to, vector<int> names
 }
 void Legalization::parallelLegalization(Board& board) {
 
-
-
 	const int numThreads = 4;
 	int binsPerThread = bins.size() / numThreads;
 	int remainder = bins.size() % numThreads;
@@ -275,7 +297,7 @@ void Legalization::parallelLegalization(Board& board) {
 	for (auto& t : threads) {
 		t.join();
 	}
-
+	
 	//for (auto& it : bins) {
 	//	for (auto& it2 : it) {
 	//		legalizationInBin(board, it2);
@@ -292,19 +314,22 @@ void  Legalization::legalizationInBin(Board& board, bin& bin) {
 		int y = board.InstToGate.at(it).getY();
 		int width = board.InstToGate.at(it).getWidth();
 		int height = board.InstToGate.at(it).getHeight();
-		int gateLLXSite = (x - bin.siteLLX) / siteWidth;
-		int gateLLYSite = (y - bin.siteLLY) / siteHeight;
-		int gateURXSite = (x + width - bin.siteLLX) / siteWidth;
-		int gateURYSite = (y + height - bin.siteLLY) / siteHeight;
-		for (int i = gateLLXSite; i < gateURXSite; i++) {
-			for (int j = gateLLYSite; j < gateURYSite; j++) {
-				bin.sites.at(i).at(j) = 1;
+		int gateLLSiteX = (x - bin.siteLLX) / siteWidth;
+		int gateLLSiteY = (y - bin.siteLLY) / siteHeight;
+		int gateURSiteX = (x + width - bin.siteLLX) / siteWidth;
+		int gateURSiteY = (y + height - bin.siteLLY) / siteHeight;
+		for (int i = gateLLSiteX; i < gateURSiteX; i++) {
+			for (int j = gateLLSiteY; j < gateURSiteY; j++) {
 				int x1 = (bin.siteLLX - placementRowLLX) / siteWidth + i;
 				int y1 = (bin.siteLLY - placementRowLLY) / siteHeight + j;
 				{
 					lock_guard<mutex> lock(mtx); //lock the section
 					grids.at(x1).at(y1) = 1;
 				}
+				if (i < 0 || j < 0 || i >= bin.siteHorizontal || j >= bin.siteVertical) { //out of boundry
+					continue;
+				}
+				bin.sites.at(i).at(j) = 1;
 			}
 		}
 	}
@@ -447,7 +472,7 @@ void Legalization::replaceFailedFFs(Board& board) {
 			//mark the site occupied by the flipflop as 1
 			for (int i = targetX; i < targetX + flipflopURSiteX - flipflopLLSiteX; i++) {
 				for (int j = targetY; j < targetY + flipflopURSiteY - flipflopLLSiteY; j++) {
-					bins.at(i).at(j).sites.at(i).at(j) = 1;
+					grids.at(i).at(j) = 1;
 				}
 			}
 			priority.erase(remove(priority.begin(), priority.end(), it), priority.end()); //remove the flipflop from the priority list
