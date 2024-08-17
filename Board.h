@@ -72,7 +72,7 @@ private:
 	unordered_map<string, unordered_map<string, pair<float, string>>> Ddelay;
 	unordered_map<string, unordered_set<string>> Qconnect;
 	unordered_map<string, unordered_set<string>> Net2; 
-	unordered_map<int, unordered_map<int, vector<int>>>Dcon;//D Q  DConect WL Qconect QWL
+	unordered_map<int, unordered_map<int, vector<int>>>Dcon;//D Q  DConect DWL Qconect QWL
 public:
 	Board();
 	~Board();
