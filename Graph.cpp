@@ -93,7 +93,8 @@ void Graph::setWL(Board& B) {
 	ofstream fout;
 	fout.open("connect.txt");
 	unordered_map<int, unordered_map<int,vector<int>>> Dcon;//D Q  DConect WL Qconect QWL
-	
+	unordered_map<string, pair<string,int>> DCON;//D  DConect DWL
+	unordered_map<string, unordered_map<string,int>> Qcon;//Q  Qconect QWL
 	for (auto& f : B.InstToFlipFlop) {
 		for (auto& p : f.second.getPin()) {
 			if (p.type != 'D') continue;
@@ -108,10 +109,8 @@ void Graph::setWL(Board& B) {
 			for (auto& s : S) {
 				s.second.second.first = maxwl;
 			}
-
 			unordered_map<int, vector<int>>SS;
 			unordered_map<string, pair<int, string>> Q;
-			
 			for (auto& s : S) {
 				int tt;
 				tt = s.second.second.first - QWL[s.first] + slack[p.name]/B.DisplacementDelay;
@@ -130,19 +129,28 @@ void Graph::setWL(Board& B) {
 			Dcon[index] = SS;
 		}
 	}
+
 	for (auto& s : Dcon) {
-		for (auto& s1 : Dcon[s.first]) {
-			
-			fout << nodes[s.first].name << " " << nodes[s1.first].name << " ";
-			fout << nodes[s1.second[0]].name << " ";
-			fout << s1.second[1] << " ";
-			fout << nodes[s1.second[2]].name << " ";
-			fout << s1.second[3] << " ";	
-				fout << endl;
+		for (auto& s1 : s.second) {
+			DCON[nodes[s.first].name] = make_pair(nodes[s1.second[0]].name,s1.second[1]);
+			if (Qcon[nodes[s1.first].name].find(nodes[s1.second[2]].name) == Qcon[nodes[s1.first].name].end() || Qcon[nodes[s1.first].name][nodes[s1.second[2]].name] > s1.second[3])
+			{
+				Qcon[nodes[s1.first].name][nodes[s1.second[2]].name] = s1.second[3];
+			}
 		}
 	}
-
-	B.setwl(Dcon);
+	fout << "D: " << endl;
+	for (auto& s : DCON) {
+		fout << s.first << " " << s.second.first << " " << s.second.second << " " << endl;
+	
+	}
+	cout << "Q: " << endl;
+	for (auto& s : Qcon) {
+		for (auto& s1 : s.second) {
+			fout << s.first << " " << s1.first << " " << s1.second << " " << endl;
+		}
+	}
+	B.setwl(DCON,Qcon);
 	//fout.close();
 }
 void Graph::dfs(int index, int WL, unordered_map<int, pair<int,pair<int, int>>>& S,int tmp, unordered_map<int, int>&QWL,int &maxwl) {
