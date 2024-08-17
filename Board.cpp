@@ -72,7 +72,7 @@ Board::Board() {
 Board::~Board() {}
 void Board::ReadFile(void) {
 	ifstream fin;
-	string Filename = "testcase1.txt";
+	string Filename = "testcase2_0812.txt";
 	//cout << "filename :";
 	//cin >> Filename;
 	fin.open(Filename);
@@ -85,7 +85,7 @@ void Board::ReadFile(void) {
 	fin >> Str >> Alpha;
 	fin >> Str >> Beta;
 	fin >> Str >> Gemma;
-	fin >> Str >> Delta;
+	fin >> Str >> Lamda;
 	int NumInput, NumOutput;
 	fin >> Str >> LowerLeftX >> LowerLeftY >> HigherRightX >> HigherRightY;
 	fin >> Str >> NumInput;
@@ -235,8 +235,8 @@ void Board::ReadFile(void) {
 		}
 	}
 	fin.close();
-	ifstream fin2;
-	fin2.open("connect.txt");
+	/*ifstream fin2;
+	fin2.open("connect.txt"); // testcase1_0802.txt
 	string Q, in, D;
 	int WL;
 	while (fin2 >> Q >> in >> D >> WL) {
@@ -249,12 +249,10 @@ void Board::ReadFile(void) {
 		int cnum2 = stoi(Q.substr(1, pos2));
 		string qname = Q.substr(pos2 + 1, end);
 		float qdelay = InstToFlipFlop[cnum2].getQpinDelay();
-		//InstToFlipFlop[cnum2].setQconnect(qname, D);
-		//InstToFlipFlop[cnum1].setDWL(dname, Q, WL * DisplacementDelay + qdelay, in);
 		Qconnect[Q].insert(D);
 		Ddelay[D][Q] = make_pair(WL * DisplacementDelay + qdelay, in);
 	}
-	fin2.close();
+	fin2.close();*/
 }
 void Board::Display(void) {
 	ofstream fout;
@@ -270,7 +268,7 @@ void Board::Display(void) {
 		}
 	}
 	fout.close();
-	system("pause");
+	//system("pause");
 }
 void Board::outputFile(void) {
 	ofstream fout;
@@ -388,27 +386,13 @@ void Board::Dslack(string dname, float &NS, int x, int y) {
 	auto end = string::npos;
 	size_t pos1 = dname.find("/");
 	int cnum1 = stoi(dname.substr(1, pos1));
-	FlipFlop f = InstToFlipFlop[cnum1];
 	string pname = dname.substr(0, pos1);
-	float slack = f.getSlack()[pname];
-	Point p1 = NametoPoint(dname);
-	int x1 = p1.x + f.getX();
-	int y1 = p1.y + f.getY();
-	//int netnum = PointToNet[dname];
+	float slack = InstToFlipFlop[cnum1].getSlack()[pname];
+	Point p1 = getPos(dname);
 	for (auto& it : Net2[dname]) {
-		//if (it.find("D") != end || it.find("/IN") != end || it.find("OUTPUT") != end) continue;
-		size_t pos2 = it.find("/");
-		Point p2 = NametoPoint(it);
-		int x2 = p1.x;
-		int y2 = p1.y;
-		if (pos2 != string::npos) {
-			int cnum2 = stoi(it.substr(1, pos2));
-			Cell c = getCell(cnum2);
-			x2 += c.getX();
-			y2 += c.getY();
-		}
-		int WL1 = abs(x1 - x2) + abs(y1 - y2);
-		int WL2 = abs(x - x2) + abs(y - y2);
+		Point p2 = getPos(it);
+		int WL1 = dist(p1, p2);
+		int WL2 = abs(x - p2.x) + abs(y - p2.y);
 		float dWL = (float) WL2 - WL1;
 		float newslack = slack - dWL * DisplacementDelay;
 		slack = slack < 0 ? -slack : 0;
@@ -427,7 +411,15 @@ void Board::Qslack(string PinName, float &NS, int x, int y, float dq) {
 		string dname = it.substr(pos2 + 1, string::npos);
 		float slack = InstToFlipFlop[cnum2].getSlack()[dname];
 		float dWL;
-		vector<float> tmp;
+		Point p1 = getPos(PinName);
+		Point p2 = getPos(Ddelay[it][PinName].second);
+		int WL1 = dist(p1, p2);
+		int WL2 = abs(x - p2.x) + abs(y - p2.y);
+		dWL = WL2 - WL1;
+		if (slack < -5.0) {
+			NS += dq + dWL * DisplacementDelay;
+		}
+		/*vector<float> tmp;
 		float Max = 0;
 		for (auto& f : Ddelay[it]) {
 			float delay = f.second.first;
@@ -462,32 +454,15 @@ void Board::Qslack(string PinName, float &NS, int x, int y, float dq) {
 			slack = slack < 0 ? -slack : 0;
 			newslack = newslack < 0 ? -newslack : 0;
 			NS += newslack - slack;
-		}
+		}*/
 	}
 }
 void Board::updateDSlack(string dname, float& dWL, int x, int y) {
-	auto end = string::npos;
-	size_t pos = dname.find("/");
-	int cnum1 = stoi(dname.substr(1, pos));
-	FlipFlop f = InstToFlipFlop[cnum1];
-	Point p1 = NametoPoint(dname);
-	int x1 = p1.x + f.getX();
-	int y1 = p1.y + f.getY();
-	//int netnum = PointToNet[dname];
+	Point p1 = getPos(dname);
 	for (auto& it : Net2[dname]) {
-		//if (it.find("D") != end || it.find("/IN") != end || it.find("OUTPUT") != end) continue;
-		Point tmp = NametoPoint(it);
-		int x2 = tmp.x;
-		int y2 = tmp.y;
-		size_t pos2 = it.find("/");
-		if (pos2 != string::npos) {
-			int cnum2 = stoi(it.substr(1, pos2));
-			Cell F2 = getCell(cnum2);
-			x2 += F2.getX();
-			y2 += F2.getY();
-		}
-		int WL1 = abs(x1 - x2) + abs(y1 - y2);
-		int WL2 = abs(x - x2) + abs(y - y2);
+		Point p2 = getPos(it);
+		int WL1 = dist(p1, p2);
+		int WL2 = abs(x - p2.x) + abs(y - p2.y);
 		dWL = (float) WL2 - WL1;
 	}
 }
@@ -505,22 +480,10 @@ void Board::updateQSlack(string qname, int x, int y, float dq) {
 			string qpin = f.first;
 			Max = delay > Max ? delay : Max;
 			if (qpin == qname) {
-				FlipFlop F1 = InstToFlipFlop[cnum1];     // Q
-				Point p1 = NametoPoint(qname);
-				int x1 = F1.getX() + p1.x;
-				int y1 = F1.getY() + p1.y;
-				Point p2 = NametoPoint(f.second.second); // in
-				int x2 = p2.x;
-				int y2 = p2.y;
-				size_t pos3 = f.second.second.find("/");
-				if (pos3 != string::npos) {
-					int cnum3 = stoi(f.second.second.substr(1, pos3));
-					Cell F3 = getCell(cnum3);
-					x2 += F3.getX();
-					y2 += F3.getY();
-				}
-				int WL1 = abs(x1 - x2) + abs(y1 - y2);
-				int WL2 = abs(x - x2) + abs(y - y2);
+				Point p1 = getPos(qname);
+				Point p2 = getPos(f.second.second);
+				int WL1 = dist(p1, p2);
+				int WL2 = abs(x - p2.x) + abs(y - p2.y);
 				float dWL = (float) WL2 - WL1;
 				delay += dq + dWL * DisplacementDelay;
 				Ddelay[it][qname] = make_pair(delay, f.second.second);
@@ -535,7 +498,6 @@ void Board::updateQSlack(string qname, int x, int y, float dq) {
 	}
 }
 void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
-	//Display();
 	string FlipFlopName = "C" + to_string(CellNumber);
 	NewFlipFlop.insert(CellNumber);
 	F2.setInstNum(CellNumber);
@@ -705,7 +667,7 @@ void Board::Debanking(FlipFlop F1, vector<FlipFlop>& F2) {
 			int netnum;
 			// Pin mapping to Pin for 1 bit
 			int dd = 0;
-			int qq = 0;  //memory
+			int qq = 0;
 			if (p.type == 'D') {
 				while (prevPin[d].type != 'D') {
 					d++;
@@ -715,7 +677,7 @@ void Board::Debanking(FlipFlop F1, vector<FlipFlop>& F2) {
 					D = "D";
 				}
 				f.setsource(D, prevPin[d].sourcename[0]);
-				dd++;  //memory
+				dd++;
 				prev = prevcell + "/" + prevPin[d].name;
 				map<string, bool> visited;
 				float NS = F1.getSlack()[prevPin[d].name];
@@ -928,62 +890,35 @@ bool Board::Check() {
 	}
 	return true;
 }
-int Board::dist(string p1, string p2) {
-	size_t pos1 = p1.find("/");
-	size_t pos2 = p2.find("/");
+Point Board::getPos(string Pin) {
 	auto end = string::npos;
-	int x1, x2, y1, y2;
-	if (pos1 != end) {
-		int cnum1 = stoi(p1.substr(1, pos1));
-		string pname1 = p1.substr(pos1 + 1, end);
-		Cell c1 = getCell(cnum1);
-		for (auto& p : c1.getPin()) {
-			if(pname1 == p.name) {
-				x1 = c1.getX() + p.x;
-				y1 = c1.getY() + p.y;
-			}
-		}
+	size_t pos = Pin.find("/");
+	Point p(-1,-1);
+	if (pos != string::npos) {
+		int cnum = stoi(Pin.substr(1, pos));
+		Cell c = getCell(cnum);
+		string pname = Pin.substr(pos + 1, string::npos);
+		p = c.getPoint(pname);
+		p.x += c.getX();
+		p.y += c.getY();
 	}
 	else {
-		for (auto& p : Input) {
-			if (p.name == p1) {
-				x1 = p.x;
-				y1 = p.y;
-			}
+		for (auto& it : Input) {
+			if (it.name == Pin) p = it;
 		}
-		for (auto& p : Output) {
-			if (p.name == p1) {
-				x1 = p.x;
-				y1 = p.y;
-			}
+		for (auto& it : Output) {
+			if (it.name == Pin) p = it;
 		}
 	}
-	if (pos2 != end) {
-		int cnum2 = stoi(p2.substr(1, pos2));
-		string pname2 = p2.substr(pos2 + 1, end);
-		Cell c2 = getCell(cnum2);
-		for (auto& p : c2.getPin()) {
-			if(pname2 == p.name) {
-				x2 = c2.getX() + p.x;
-				y2 = c2.getY() + p.y;
-			}
-		}
-	}
-	else {
-		for (auto& p : Input) {
-			if (p.name == p2) {
-				x2 = p.x;
-				y2 = p.y;
-			}
-		}
-		for (auto& p : Output) {
-			if (p.name == p2) {
-				x2 = p.x;
-				y2 = p.y;
-			}
-		}
-	}
-	return abs(x1 - x2) + abs(y1 - y2);
+	return p;
+}
+int Board::dist(Point& p1, Point& p2) {
+	return abs(p1.x - p2.x) + abs(p1.y - p2.y);
+}
+int Board::dist(string& s1, string& s2) {
+	Point p1 = getPos(s1);
+	Point p2 = getPos(s2);
+	return abs(p1.x - p2.x) + abs(p1.y - p2.y);
 }
 float Board::TNSCost() {
 	float sum = 0;
@@ -1019,14 +954,14 @@ float Board::BinCost() {
 		int ft = it.second.getTop();
 		for (int i = fx / BinWidth * BinWidth; i < fr; i += BinWidth) {
 			int w;
-			if (i + BinWidth > fr)w = fr - i;
-			else if (i >= fx)w = BinWidth;
-			else w = i - fx;
+			if (i + BinWidth > fr && i >= fx)w = fr - i;
+			else if (i < fx && i + BinWidth <= fr)w = i - fx + BinWidth;
+			else w = BinWidth;
 			for (int j = fy / BinHeight * BinHeight; j < ft; j += BinHeight) {
 				int h;
-				if (j + BinHeight > ft)h = ft - j;
-				else if (j >= fy)w = BinHeight;
-				else h = j - fy;
+				if (j + BinHeight > ft && j >= fy)h = ft - j;
+				else if (j < fy && j + BinHeight <= ft)w = j - fy + BinHeight;
+				else h = BinHeight;
 				BinDensity[i][j] += (float) w * h;
 			}
 		}
@@ -1038,14 +973,14 @@ float Board::BinCost() {
 		int gt = it.second.getTop();
 		for (int i = gx / BinWidth * BinWidth; i < gr; i += BinWidth) {
 			int w;
-			if (i + BinWidth > gr)w = gr - i;
-			else if (i > gx)w = BinWidth;
-			else w = i - gx;
+			if (i + BinWidth > gr && i >= gx)w = gr - i;
+			else if (i < gx && i + BinWidth <= gr)w = i - gx + BinWidth;
+			else w = BinWidth;
 			for (int j = gy / BinHeight * BinHeight; j < gt; j += BinHeight) {
 				int h;
-				if (j + BinHeight > gt)h = gt - j;
-				else if (j > gy)w = BinHeight;
-				else h = j - gy;
+				if (j + BinHeight > gt && j >= gy)h = gt - j;
+				else if (j < gy && j + BinHeight <= gt)w = j - gy + BinHeight;
+				else h = BinHeight;
 				BinDensity[i][j] += (float) w * h;
 			}
 		}
@@ -1060,7 +995,7 @@ float Board::BinCost() {
 }
 float Board::Cost() {
 	float sum = 0;
-	sum += Alpha * TNSCost() + Beta * PowerCost() + Gemma * AreaCost() + Delta * BinCost();
+	sum += Alpha * TNSCost() + Beta * PowerCost() + Gemma * AreaCost() + Lamda * BinCost();
 	return sum;
 }
 int Board::getInstsize() {
