@@ -20,11 +20,12 @@ Legalization::Legalization(Board& board) {
 	placementRowURY = placementRows.at(placementRows.size() - 1).starty + placementRows.at(placementRows.size() - 1).siteHeight; //1285200
 	maxHorizontalDisplacement = 10;
 	maxVerticalDisplacement = 4;
-	maxFailedHorizontalDisplacement = 50;
-	maxFailedVerticalDisplacement = 50;
+	maxFailedHorizontalDisplacement = 30;
+	maxFailedVerticalDisplacement = 30;
 	siteHorizontal = placementRows.at(0).numSites;
 	siteVertical = placementRows.size();
-	grids.resize(siteHorizontal, vector<bool>(siteVertical));
+	grids.resize(siteHorizontal, vector<int>(siteVertical, 0));
+	maxFFPushed = 50;
 }
 Legalization::~Legalization() {}
 void Legalization::legalize(Board& board) {
@@ -273,7 +274,6 @@ void Legalization::moveCells(Board& board, bin& from, bin& to, vector<int> names
 	}
 }
 void Legalization::parallelLegalization(Board& board) {
-
 	const int numThreads = 4;
 	int binsPerThread = bins.size() / numThreads;
 	int remainder = bins.size() % numThreads;
@@ -324,7 +324,7 @@ void  Legalization::legalizationInBin(Board& board, bin& bin) {
 				int y1 = (bin.siteLLY - placementRowLLY) / siteHeight + j;
 				{
 					lock_guard<mutex> lock(mtx); //lock the section
-					grids.at(x1).at(y1) = 1;
+					grids.at(x1).at(y1) = -1;
 				}
 				if (i < 0 || j < 0 || i >= bin.siteHorizontal || j >= bin.siteVertical) { //out of boundry
 					continue;
@@ -364,7 +364,7 @@ void  Legalization::legalizationInBin(Board& board, bin& bin) {
 					int y1 = (bin.siteLLY - placementRowLLY) / siteHeight + j;
 					{
 						lock_guard<mutex> lock(mtx); //lock the section
-						grids.at(x1).at(y1) = 1;
+						grids.at(x1).at(y1) = it.second;
 					}
 				}
 			}
@@ -400,7 +400,7 @@ void  Legalization::legalizationInBin(Board& board, bin& bin) {
 						int y1 = (bin.siteLLY - placementRowLLY) / siteHeight + j;
 						{
 							lock_guard<mutex> lock(mtx); //lock the section
-							grids.at(x1).at(y1) = 1;
+							grids.at(x1).at(y1) = it.second;
 						}
 					}
 				}
@@ -447,35 +447,26 @@ void Legalization::replaceFailedFFs(Board& board) {
 		int flipflopLLSiteY = (y - placementRowLLY) / siteHeight;
 		int flipflopURSiteX = (x + width - placementRowLLX) / siteWidth;
 		int flipflopURSiteY = (y + height - placementRowLLY) / siteHeight;
-		//find the nearest legal site
-		int targetX = -1;
-		int targetY = -1;
-		int minDistance = INT_MAX;
+		bool placed = false;
+		
 		// find legal site in specified range
 		for (int i = flipflopLLSiteX - maxFailedHorizontalDisplacement; i <= flipflopURSiteX + maxFailedHorizontalDisplacement; i++) {
+			if(placed) break;
 			for (int j = flipflopLLSiteY - maxFailedVerticalDisplacement; j <= flipflopURSiteY + maxFailedVerticalDisplacement; j++) {
-				if (isLegalInRegion(i, j, i + flipflopURSiteX - flipflopLLSiteX, j + flipflopURSiteY - flipflopLLSiteY)) {
-					int distance = abs(i - flipflopLLSiteX) + abs(j - flipflopLLSiteY);
-					if (distance < minDistance) {
-						minDistance = distance;
-						targetX = i;
-						targetY = j;
+				if (placed) break;
+				int moveCounts = 0;
+				vector<vector<int>> tempGrids = grids;
+				vector<tuple<int, int, int>> moveFFs; //flipflop index, x, y
+				if (pushAndPlace(board, tempGrids, moveFFs, moveCounts, it.second, i, j, i + flipflopURSiteX - flipflopLLSiteX, j + flipflopURSiteY - flipflopLLSiteY)) {
+					grids = tempGrids;
+					for (auto& it : moveFFs) {
+						board.InstToFlipFlop.at(get<0>(it)).setPos(get<1>(it), get<2>(it));
 					}
+		
+					priority.erase(remove(priority.begin(), priority.end(), it), priority.end()); //remove the flipflop from the priority list
+					placed = true;
 				}
 			}
-		}
-		if (targetX != -1) { //legal site found
-			//move the flipflop to the site
-			int targetX1 = placementRowLLX + targetX * siteWidth;
-			int targetY1 = placementRowLLY + targetY * siteHeight;
-			board.InstToFlipFlop.at(it.second).setPos(targetX1, targetY1);
-			//mark the site occupied by the flipflop as 1
-			for (int i = targetX; i < targetX + flipflopURSiteX - flipflopLLSiteX; i++) {
-				for (int j = targetY; j < targetY + flipflopURSiteY - flipflopLLSiteY; j++) {
-					grids.at(i).at(j) = 1;
-				}
-			}
-			priority.erase(remove(priority.begin(), priority.end(), it), priority.end()); //remove the flipflop from the priority list
 		}
 	}
 	if (!priority.empty()) {
@@ -493,10 +484,147 @@ bool Legalization::isLegalInRegion(int flipflopLLSiteX, int flipflopLLSiteY, int
 	//check if the sites are occupied
 	for (int i = flipflopLLSiteX; i < flipflopURSiteX; i++) {
 		for (int j = flipflopLLSiteY; j < flipflopURSiteY; j++) {
-			if (grids.at(i).at(j) == 1) {
+			if (grids.at(i).at(j) != 0) {
 				return false;
 			}
 		}
 	}
 	return true;
+}
+bool Legalization::pushAndPlace(Board& board, vector<vector<int>>& grids, vector<tuple<int, int, int>>& moveFFs, int& moveCounts, int FFIndex, int flipflopLLSiteX, int flipflopLLSiteY, int flipflopURSiteX, int flipflopURSiteY) {
+	moveCounts++;
+	if (moveCounts > maxFFPushed) {
+		return false;
+	}
+	if (isLegalInRegion(flipflopLLSiteX, flipflopLLSiteY, flipflopURSiteX, flipflopURSiteY)) {
+		int targetX = placementRowLLX + flipflopLLSiteX * siteWidth;
+		int targetY = placementRowLLY + flipflopLLSiteY * siteHeight;
+		moveFFs.push_back(make_tuple(FFIndex, targetX, targetY));
+		for (int i = flipflopLLSiteX; i < flipflopURSiteX; i++) {
+			for (int j = flipflopLLSiteY; j < flipflopURSiteY; j++) {
+				grids.at(i).at(j) = FFIndex;
+			}
+		}
+		return true;
+	}
+	else {
+		for (int i = flipflopLLSiteX; i < flipflopURSiteX; i++) {
+			for (int j = flipflopLLSiteY; j < flipflopURSiteY; j++) {
+				if (grids.at(i).at(j) == -1 ) { //occupied by gates
+					return false;
+				}
+			}
+		}
+		for (int i = flipflopLLSiteX; i < flipflopURSiteX; i++) {
+			for (int j = flipflopLLSiteY; j < flipflopURSiteY; j++) {
+				if (grids.at(i).at(j) != 0) { //not empty
+					int cellIndex = grids.at(i).at(j);
+					int x = board.InstToFlipFlop.at(cellIndex).getX();
+					int y = board.InstToFlipFlop.at(cellIndex).getY();
+					int width = board.InstToFlipFlop.at(cellIndex).getWidth();
+					int height = board.InstToFlipFlop.at(cellIndex).getHeight();
+					int occupiedflipflopLLSiteX = (x - placementRowLLX) / siteWidth;
+					int occupiedflipflopLLSiteY = (y - placementRowLLY) / siteHeight;
+					int occupiedflipflopURSiteX = (x + width - placementRowLLX) / siteWidth;
+					int occupiedflipflopURSiteY = (y + height - placementRowLLY) / siteHeight;
+					float distance = (occupiedflipflopURSiteX + occupiedflipflopLLSiteX) / 2 - (flipflopURSiteX + flipflopLLSiteX) / 2;
+					if (distance > 0) { //move the occupied cell to the right
+						if (push(board, grids, moveFFs, moveCounts, cellIndex, 1, 0)) {
+							return pushAndPlace(board, grids, moveFFs, moveCounts, FFIndex, flipflopLLSiteX, flipflopLLSiteY, flipflopURSiteX, flipflopURSiteY);
+						}
+						else {
+								return false;
+						}
+					}
+					else { //move the occupied cell to the left
+						if (push(board, grids, moveFFs, moveCounts, cellIndex, -1, 0)) {
+							return pushAndPlace(board, grids, moveFFs, moveCounts, FFIndex, flipflopLLSiteX, flipflopLLSiteY, flipflopURSiteX, flipflopURSiteY);
+						}
+						else {
+								return false;
+						}
+					}
+				}
+			}
+		}
+		return false;
+	}
+}
+bool Legalization::push(Board& board, vector<vector<int>>& grids, vector<tuple<int, int, int>>& moveFFs, int& moveCounts, int FFIndex, int dx, int dy) {
+	//dx: move sites in x direction, dy: move sites in y direction, not used for now
+	moveCounts++;
+	if (moveCounts > maxFFPushed) {
+		return false;
+	}
+	int x = board.InstToFlipFlop.at(FFIndex).getX();
+	int y = board.InstToFlipFlop.at(FFIndex).getY();
+	int width = board.InstToFlipFlop.at(FFIndex).getWidth();
+	int height = board.InstToFlipFlop.at(FFIndex).getHeight();
+	int flipflopLLSiteX = (x - placementRowLLX) / siteWidth;
+	int flipflopLLSiteY = (y - placementRowLLY) / siteHeight;
+	int flipflopURSiteX = (x + width - placementRowLLX) / siteWidth;
+	int flipflopURSiteY = (y + height - placementRowLLY) / siteHeight;
+	flipflopLLSiteX += dx;
+	flipflopLLSiteY += dy;
+	flipflopURSiteX += dx;
+	flipflopURSiteY += dy;
+	//check if out of boundry
+	if (flipflopLLSiteX < 0 || flipflopLLSiteY < 0 || flipflopURSiteX >= siteHorizontal || flipflopURSiteY >= siteVertical) {
+		return false;
+	}
+	//check if the sites are occupied
+	if (dx > 0) { //move to the right
+		for (int i = flipflopLLSiteX; i < flipflopURSiteX; i++) {
+			for (int j = flipflopLLSiteY; j < flipflopURSiteY; j++) {
+				if (grids.at(i).at(j) == -1) { //occupied by gates
+					return false;
+				}
+			}
+		}
+		for (int i = flipflopLLSiteX; i < flipflopURSiteX; i++) {
+			for (int j = flipflopLLSiteY; j < flipflopURSiteY; j++) {
+				if (grids.at(i).at(j) != 0 && grids.at(i).at(j) != FFIndex) { //occupied by other flipflops
+					if (!push(board, grids, moveFFs, moveCounts, grids.at(i).at(j), flipflopURSiteX - i, 0)) {
+						return false;
+					}
+				}
+			}
+		}
+	}
+	else { //move to the left
+		for (int i = flipflopLLSiteX; i < flipflopURSiteX; i++) {
+			for (int j = flipflopLLSiteY; j < flipflopURSiteY; j++) {
+				if (grids.at(i).at(j) == -1) { //occupied by gates
+					return false;
+				}
+			}
+		}
+		for (int i = flipflopURSiteX - 1; i >= flipflopLLSiteX; i--) {
+			for (int j = flipflopURSiteY - 1; j >= flipflopLLSiteY; j--) {
+				if (grids.at(i).at(j) != 0 && grids.at(i).at(j) != FFIndex) { //occupied by other flipflops
+					if (!push(board, grids, moveFFs, moveCounts, grids.at(i).at(j), flipflopLLSiteX - i, 0)) {
+						return false;
+					}
+				}
+			}
+		}
+	}
+	//move the flipflop to the site
+	for (int i = flipflopLLSiteX; i < flipflopURSiteX; i++) {
+		for (int j = flipflopLLSiteY; j < flipflopURSiteY; j++) {
+			grids.at(i - dx).at(j - dy) = 0;
+		}
+	}
+	for (int i = flipflopLLSiteX; i < flipflopURSiteX; i++) {
+		for (int j = flipflopLLSiteY; j < flipflopURSiteY; j++) {
+			grids.at(i).at(j) = FFIndex;
+		}
+	}
+	int targetX = placementRowLLX + flipflopLLSiteX * siteWidth;
+	int targetY = placementRowLLY + flipflopLLSiteY * siteHeight;
+	moveFFs.push_back(make_tuple(FFIndex, targetX, targetY));
+	return true;
+}
+bool Legalization::checkLegal(Board&) {
+
 }
