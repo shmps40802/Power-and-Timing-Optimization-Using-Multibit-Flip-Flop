@@ -90,8 +90,8 @@ void Graph::removeEdge(int from, int to) {
 	}
 }
 void Graph::setWL(Board& B) {
-	ofstream fout;
-	fout.open("connect.txt");
+	//ofstream fout;
+	//fout.open("connect.txt");
 	unordered_map<int, unordered_map<int,vector<int>>> Dcon;//D Q  DConect WL Qconect QWL
 	unordered_map<string, pair<string,int>> DCON;//D  DConect DWL
 	unordered_map<string, unordered_map<string,int>> Qcon;//Q  Qconect QWL
@@ -114,7 +114,7 @@ void Graph::setWL(Board& B) {
 			for (auto& s : S) {
 				int tt;
 				tt = s.second.second.first - QWL[s.first] + slack[p.name]/B.DisplacementDelay;
-				int wl;
+				int wl = 0;
 				for (auto& it : adjList[index]) {
 					if (it.to == s.second.first) {
 						wl=it.weight + slack[p.name] / B.DisplacementDelay;
@@ -139,15 +139,15 @@ void Graph::setWL(Board& B) {
 			}
 		}
 	}
-	fout << "D: " << endl;
+	//fout << "D: " << endl;
 	for (auto& s : DCON) {
-		fout << s.first << " " << s.second.first << " " << s.second.second << " " << endl;
+		//fout << s.first << " " << s.second.first << " " << s.second.second << " " << endl;
 	
 	}
-	cout << "Q: " << endl;
+	//cout << "Q: " << endl;
 	for (auto& s : Qcon) {
 		for (auto& s1 : s.second) {
-			fout << s.first << " " << s1.first << " " << s1.second << " " << endl;
+			//fout << s.first << " " << s1.first << " " << s1.second << " " << endl;
 		}
 	}
 	B.setwl(DCON,Qcon);
