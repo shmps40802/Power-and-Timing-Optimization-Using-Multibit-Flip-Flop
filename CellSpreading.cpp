@@ -33,7 +33,7 @@ bool CellSpreading::Dijkstra() {
         if (d != cost[nowAt]) continue; //cost in queue is outdated, skip
 
         for (int i = 0; i < G[nowAt].size(); i++) {
-            Edge& it = edges[G[nowAt][i]];
+            Arc& it = arcs[G[nowAt][i]];
             if (it.residual > 0 && cost[it.to] > cost[nowAt] + it.cost + h[nowAt] - h[it.to]) {
                 cost[it.to] = cost[nowAt] + it.cost + h[nowAt] - h[it.to];
                 flow[it.to] = min(flow[nowAt], it.residual);
@@ -54,20 +54,20 @@ bool CellSpreading::Dijkstra() {
     minCost += h[t] * flow[t]; //cost to send flow[t] flow from source to target
     int nowAt = t;
     while (nowAt != s) {
-        edges[last[nowAt]].residual -= flow[t];
-        edges[last[nowAt] ^ 1].residual += flow[t];
-        nowAt = edges[last[nowAt]].from;
+        arcs[last[nowAt]].residual -= flow[t];
+        arcs[last[nowAt] ^ 1].residual += flow[t];
+        nowAt = arcs[last[nowAt]].from;
     }
     return true;
 }
 void CellSpreading::addedge(int from, int to, int capacity, int cost) {
-	G[from].push_back(edges.size()); //edge index in edges
-	edges.push_back(Edge(from, to, capacity, cost)); //forward edge
-	G[to].push_back(edges.size()); //edge index in edges
-	edges.push_back(Edge(to, from, 0, -cost)); //backward edge
+	G[from].push_back(arcs.size()); //edge index in edges
+	arcs.push_back(Arc(from, to, capacity, cost)); //forward edge
+	G[to].push_back(arcs.size()); //edge index in edges
+	arcs.push_back(Arc(to, from, 0, -cost)); //backward edge
 }
 void CellSpreading::printFlows() {
-    for (const auto& e : edges) {
+    for (const auto& e : arcs) {
         if (e.capacity > 0) { //print only forward edges
             int flow = e.capacity - e.residual;
             std::cout << "Edge from " << e.from << " to " << e.to << " has flow: " << flow << endl;
@@ -75,7 +75,7 @@ void CellSpreading::printFlows() {
     }
 }
 int CellSpreading::getFlow(int from, int to) {
-    for (const auto& e : edges) {
+    for (const auto& e : arcs) {
         if (e.from == from && e.to == to) {
             return e.capacity - e.residual;
         }
