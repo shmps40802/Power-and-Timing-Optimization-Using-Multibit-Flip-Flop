@@ -72,6 +72,8 @@ private:
 	unordered_map<string, unordered_map<string, pair<float, string>>> Ddelay;
 	unordered_map<string, unordered_set<string>> Qconnect;
 	unordered_map<string, unordered_set<string>> Net2; 
+	unordered_map<string, pair<string, int>> Dcon;//D  DConect DWL
+	unordered_map<string, unordered_map<string, int>> Qcon;//Q  Qconect QWL
 public:
 	Board();
 	~Board();
@@ -107,5 +109,6 @@ public:
 	void mergeSort(vector<node>&, int, int);
 	void addNet2(string, string);
 	void removeNet2(string, string);
+	void setwl(unordered_map<string, pair<string, int>> DCON, unordered_map<string, unordered_map<string, int>> Qcon);
 };
 #endif
