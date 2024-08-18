@@ -72,6 +72,8 @@ private:
 	map<int, map<int, float>> BinDensity;            // bin density of board
 	unordered_map<string, unordered_map<string, pair<float, string>>> Ddelay;
 	unordered_map<string, unordered_set<string>> Qconnect;
+	unordered_map<string, pair<string, int>> Dcon;//D  DConect DWL
+	unordered_map<string, unordered_map<string, int>> Qcon;//Q  Qconect QWL
 public:
 	Board();
 	~Board();
@@ -103,5 +105,6 @@ public:
 	void setDelay(string, string, string, int);
 	void merge(vector<node>&, int, int, int);
 	void mergeSort(vector<node>&, int, int);
+	void setwl(unordered_map<string, pair<string, int>> DCON, unordered_map<string, unordered_map<string, int>> Qcon);
 };
 #endif
