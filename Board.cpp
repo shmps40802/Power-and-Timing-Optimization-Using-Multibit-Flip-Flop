@@ -1019,3 +1019,7 @@ void Board::setDelay(string Q, string in, string D, int WL) {
 	Qconnect[Q].insert(D);
 	Ddelay[D][Q] = make_pair(delay, in);
 }
+void Board::setwl(unordered_map<string, pair<string, int>> DCON, unordered_map<string, unordered_map<string, int>> Qcon) {
+	this->Dcon = DCON;
+	this->Qcon = Qcon;
+}
