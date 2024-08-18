@@ -1,5 +1,6 @@
 #ifndef LEGALIZATION_H
 #define LEGALIZATION_H
+#include <iostream>
 #include <string>
 #include <vector>
 #include <map>
@@ -9,6 +10,7 @@
 #include <mutex>
 #include <functional>
 #include <ctime>
+#include <tuple>
 #include "Board.h"
 #include "CellSpreading.h"
 using namespace std;
@@ -77,12 +79,13 @@ private:
 	int maxVerticalDisplacement; //maximum vertical displacement of the cells (counted in sites)
 	int maxFailedHorizontalDisplacement; //maximum failed flipflop horizontal displacement of the cells (counted in sites)
 	int maxFailedVerticalDisplacement; //maximum failed flipflop vertical displacement of the cells (counted in sites)
+	int maxFFPushed; //maximum flipflop number to be pushed 
 	vector<vector<bin>> bins;
 	vector<placementRow> placementRows;
 	vector<reference_wrapper<bin>> overfilledBins;
 	vector<vector<reference_wrapper<bin>>> targetBins;
 	vector<pair<reference_wrapper<bin>, int>> placeFailedFlipFlops; //bin, flipflop index
-	vector<vector<bool>> grids; //0: empty, 1: occupied
+	vector<vector<int>> grids; //0: empty, -1: gates, others: flipflop index
 	mutex mtx;
 public:
 	Legalization(Board&);
@@ -100,5 +103,8 @@ public:
 	bool isLegalInBin(bin& bin, int, int, int, int); // no overlap or out of boundary
 	void replaceFailedFFs(Board&);
 	bool isLegalInRegion(int, int, int, int); // no overlap or out of boundary
+	bool pushAndPlace(Board&, vector<vector<int>>&, vector<tuple<int, int, int>>&, int&, int, int, int, int, int);
+	bool push(Board&, vector<vector<int>>&, vector<tuple<int, int, int>>&, int&, int, int, int);
+	bool checkLegal(Board&);
 };
 #endif
