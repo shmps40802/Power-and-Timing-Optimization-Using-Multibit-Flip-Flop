@@ -14,6 +14,7 @@ int main() {
 	C.kmeans(B);
 	Legalization le(B);
 	le.legalize(B);
+	B.outputFile();
 	//auto END = clock();
 	//cout << (END - START) / CLOCKS_PER_SEC << "s\n";
 	return 0;
