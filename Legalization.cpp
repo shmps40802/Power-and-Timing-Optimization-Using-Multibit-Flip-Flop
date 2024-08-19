@@ -517,8 +517,6 @@ bool Legalization::pushAndPlace(Board& board, vector<vector<int>>& grids, vector
 		moveFFs.push_back(make_tuple(FFIndex, targetX, targetY));
 		for (int i = flipflopLLSiteX; i < flipflopURSiteX; i++) {
 			for (int j = flipflopLLSiteY; j < flipflopURSiteY; j++) {
-				cout << "grids.size(): " << grids.size() << " grids.at(i).size():" << grids.at(i).size() << endl;
-				cout << "i: " << i << " j: " << j << " FFindex:" << FFIndex << endl;
 				grids.at(i).at(j) = FFIndex;
 			}
 		}
