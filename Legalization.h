@@ -46,16 +46,18 @@ struct bin{
 		return tie(x, y) < tie(other.x, other.y);
 	}
 };
-template <>
-struct hash<bin> {
-	size_t operator()(const bin& b) const {
-		size_t h1 = hash<int>()(b.x);
-		size_t h2 = hash<int>()(b.y);
-		size_t h3 = hash<double>()(b.density);
+namespace std {
+	template <>
+	struct hash<bin> {
+		size_t operator()(const bin& b) const {
+			size_t h1 = hash<int>()(b.x);
+			size_t h2 = hash<int>()(b.y);
+			size_t h3 = hash<double>()(b.density);
 
-		return h1 ^ (h2 << 1) ^ (h3 << 2);
-	}
-};
+			return h1 ^ (h2 << 1) ^ (h3 << 2);
+		}
+	};
+}
 
 class Legalization {
 private:
