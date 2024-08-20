@@ -81,12 +81,14 @@ private:
 	int maxVerticalDisplacement; //maximum vertical displacement of the cells (counted in sites)
 	int maxFailedHorizontalDisplacement; //maximum failed flipflop horizontal displacement of the cells (counted in sites)
 	int maxFailedVerticalDisplacement; //maximum failed flipflop vertical displacement of the cells (counted in sites)
+	int maxReplaceNum; //maximum number to replace failed flipflops
 	int maxFFPushed; //maximum flipflop number to be pushed 
 	vector<vector<bin>> bins;
 	vector<placementRow> placementRows;
 	vector<reference_wrapper<bin>> overfilledBins;
 	vector<vector<reference_wrapper<bin>>> targetBins;
-	vector<pair<reference_wrapper<bin>, int>> placeFailedFlipFlops; //bin, flipflop index
+	//vector<pair<reference_wrapper<bin>, int>> placeFailedFlipFlops; //bin, flipflop index
+	vector<int> placeFailedFlipFlops; //flipflop index
 	vector<vector<int>> grids; //0: empty, -1: gates, others: flipflop index
 	mutex mtx;
 public:
@@ -103,10 +105,13 @@ public:
 	void parallelLegalization(Board&);
 	void legalizationInBin(Board&, bin&);
 	bool isLegalInBin(bin& bin, int, int, int, int); // no overlap or out of boundary
-	void replaceFailedFFs(Board&);
-	bool isLegalInRegion(int, int, int, int); // no overlap or out of boundary
-	bool pushAndPlace(Board&, vector<vector<int>>&, vector<tuple<int, int, int>>&, int&, int, int, int, int, int);
-	bool push(Board&, vector<vector<int>>&, vector<tuple<int, int, int>>&, int&, int, int, int);
+
+	void replaceFailedFFs(Board&, vector<vector<int>>&, vector<int>&, int, int, int, int);
+	bool isLegalInRegion(vector<vector<int>>&, int, int, int, int, int, int, int, int); // no overlap or out of boundary
+	bool pushAndPlace(Board&, vector<vector<int>>&, vector<tuple<int, int, int>>&, int&, int, int, int, int, int, int, int, int, int);
+	bool push(Board&, vector<vector<int>>&, vector<tuple<int, int, int>>&, int&, int, int, int, int, int, int, int);
 	bool checkLegal(Board&);
+	bool checkSingleFFLegal(Board&, int);
+	bool checkSingleGateLegal(Board&, int);
 };
 #endif
