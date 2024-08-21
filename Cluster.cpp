@@ -11,7 +11,7 @@ Cluster::Cluster() {
 	epochs = 5;
 	maxBits = 4;
 	MinVariance = DBL_MAX;
-	Max = 1281000;
+	Max = 3000000;
 	p = 3;
 	q = 3;
 	// initializeVector(k, l);
