@@ -43,6 +43,7 @@ public:
     void kMeansClustering(vector<FlipFlop>&, int, int);
     double distance(FlipFlop, FlipFlop);
     void readData(Board&);
+    float Silhouette(vector<FlipFlop>, int);
     void kmeans(Board&);
     static bool compareFlipFlop(FlipFlop&, FlipFlop&);
     void findOptimalGrouping(vector<FlipFlop>&, Board&);
