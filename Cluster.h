@@ -17,7 +17,6 @@ private:
     int r;      // (points / centroid)
     int epochs; // number of iterations to choose points' cluster
     int maxBits;
-    double MinVariance;
     double Max; // max dimension of board
     int p;      // from p banking solutions, choose the best one
     int q;      // tries of banking in cluster
