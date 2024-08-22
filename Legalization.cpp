@@ -18,8 +18,8 @@ Legalization::Legalization(Board& board) {
 	placementRowLLY = placementRows.at(0).starty; //16800
 	placementRowURX = placementRows.at(0).startx + placementRows.at(0).siteWidth * placementRows.at(0).numSites; //1284690
 	placementRowURY = placementRows.at(placementRows.size() - 1).starty + placementRows.at(placementRows.size() - 1).siteHeight; //1285200
-	maxHorizontalDisplacement = 10;
-	maxVerticalDisplacement = 4;
+	maxHorizontalDisplacement = 20;
+	maxVerticalDisplacement = 10;
 	maxFailedHorizontalDisplacement = 30;
 	maxFailedVerticalDisplacement = 30;
 	maxReplaceNum = 10;
@@ -42,27 +42,27 @@ void Legalization::legalize(Board& board) {
 	start = clock();
 	initializeBins();
 	elapsed = double(clock() - start) / CLOCKS_PER_SEC;
-	cout << "initializeBins" << elapsed << " s" << endl;
+	//cout << "initializeBins" << elapsed << " s" << endl;
 
 	start = clock();
 	cellToBins(board);
 	elapsed = double(clock() - start) / CLOCKS_PER_SEC;
-	cout << "cellToBins" << elapsed << " s" << endl;
+	//cout << "cellToBins" << elapsed << " s" << endl;
 
 	start = clock();
 	findOverfilledBins();
 	elapsed = double(clock() - start) / CLOCKS_PER_SEC;
-	cout << "findOverfilledBins" << elapsed << " s" << endl;
+	//cout << "findOverfilledBins" << elapsed << " s" << endl;
 
 	start = clock();
 	cellSpreading(board);
 	elapsed = double(clock() - start) / CLOCKS_PER_SEC;
-	cout << "cellSpreading" << elapsed << " s" << endl;
+	//cout << "cellSpreading" << elapsed << " s" << endl;
 
 	start = clock();
 	parallelLegalization(board);
 	elapsed = double(clock() - start) / CLOCKS_PER_SEC;
-	cout << "parallelLegalization" << elapsed << " s" << endl;
+	//cout << "parallelLegalization" << elapsed << " s" << endl;
 
 	if (checkLegal(board)) {
 		cout << "The placement is legal." << endl;
@@ -389,10 +389,10 @@ void Legalization::parallelLegalization(Board& board) {
 			}
 		}
 		vector<thread> threads2;
-		threads2.emplace_back(&Legalization::replaceFailedFFs, this, ref(board), ref(grids1), ref(placeFailedFlipFlops1), placementRowLLX, placementRowLLY, placementRowMidX, placementRowMidY);
-		threads2.emplace_back(&Legalization::replaceFailedFFs, this, ref(board), ref(grids2), ref(placeFailedFlipFlops2), placementRowLLX, placementRowMidY, placementRowMidX, placementRowURY);
-		threads2.emplace_back(&Legalization::replaceFailedFFs, this, ref(board), ref(grids3), ref(placeFailedFlipFlops3), placementRowMidX, placementRowLLY, placementRowURX, placementRowMidY);
-		threads2.emplace_back(&Legalization::replaceFailedFFs, this, ref(board), ref(grids4), ref(placeFailedFlipFlops4), placementRowMidX, placementRowMidY, placementRowURX, placementRowURY);
+		threads2.emplace_back(&Legalization::replaceFailedFFs, this, ref(board), ref(grids1), ref(placeFailedFlipFlops1), maxReplaceNum, maxFailedHorizontalDisplacement, maxFailedVerticalDisplacement, placementRowLLX, placementRowLLY, placementRowMidX, placementRowMidY);
+		threads2.emplace_back(&Legalization::replaceFailedFFs, this, ref(board), ref(grids2), ref(placeFailedFlipFlops2), maxReplaceNum, maxFailedHorizontalDisplacement, maxFailedVerticalDisplacement, placementRowLLX, placementRowMidY, placementRowMidX, placementRowURY);
+		threads2.emplace_back(&Legalization::replaceFailedFFs, this, ref(board), ref(grids3), ref(placeFailedFlipFlops3), maxReplaceNum, maxFailedHorizontalDisplacement, maxFailedVerticalDisplacement, placementRowMidX, placementRowLLY, placementRowURX, placementRowMidY);
+		threads2.emplace_back(&Legalization::replaceFailedFFs, this, ref(board), ref(grids4), ref(placeFailedFlipFlops4), maxReplaceNum, maxFailedHorizontalDisplacement, maxFailedVerticalDisplacement, placementRowMidX, placementRowMidY, placementRowURX, placementRowURY);
 		//wait for all threads to finish
 		for (auto& t : threads2) {
 			t.join();
@@ -543,7 +543,7 @@ bool Legalization::isLegalInBin(bin& bin, int flipflopLLSiteX, int flipflopLLSit
 	}
 	return true;
 }
-void Legalization::replaceFailedFFs(Board& board, vector<vector<int>>& grids, vector<int>& placeFailedFlipFlops, int placementRowLLX, int placementRowLLY, int placementRowURX, int placementRowURY) {
+void Legalization::replaceFailedFFs(Board& board, vector<vector<int>>& grids, vector<int>& placeFailedFlipFlops, int maxReplaceNum, int maxFailedHorizontalDisplacement, int maxFailedVerticalDisplacement, int placementRowLLX, int placementRowLLY, int placementRowURX, int placementRowURY) {
 	vector<pair<int, int>> priority;  //priority, flipflop index
 	for (auto& it : placeFailedFlipFlops) {
 		int p = board.InstToFlipFlop.at(it).getArea() / (siteWidth * siteHeight);
@@ -588,16 +588,16 @@ void Legalization::replaceFailedFFs(Board& board, vector<vector<int>>& grids, ve
 		}
 	}
 	if (!placeFailedFlipFlops.empty()) {
-		//cout << "Failed to replace the following flipflops: ";
-		//for (auto& it : placeFailedFlipFlops) {
-		//	cout << it << ", ";
-		//}
-		//cout<< endl;
+		cout << "Failed to replace the following flipflops: ";
+		for (auto& it : placeFailedFlipFlops) {
+			cout << it << ", ";
+		}
+		cout<< endl;
 		maxFailedHorizontalDisplacement += 10;
-		maxFailedVerticalDisplacement += 5;
+		maxFailedVerticalDisplacement += 10;
 		maxReplaceNum--;
 		if (maxReplaceNum > 0) {
-			replaceFailedFFs(board, grids, placeFailedFlipFlops, placementRowLLX, placementRowLLY, placementRowURX, placementRowURY);
+			replaceFailedFFs(board, grids, placeFailedFlipFlops, maxReplaceNum, maxFailedHorizontalDisplacement, maxFailedVerticalDisplacement, placementRowLLX, placementRowLLY, placementRowURX, placementRowURY);
 		}
 		else {
 			cout << "legalization failed" << endl;
