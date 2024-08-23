@@ -73,6 +73,7 @@ void Graph::removeNode(int index) {
 }
 void Graph::addEdge(int from, int to, int weight) {
 	// adjList[from].push_back({from, to, weight, 1, 0});
+	
 	if (nodes[from].name.find("INPUT") != string::npos|| nodes[from].name.find("Q") != string::npos) {
 		adjList[to].push_back({ to, from, weight, 1 });
 	}
@@ -109,6 +110,7 @@ void Graph::setWL(Board& B) {
 			
 			for (auto& s : S) {
 				s.second.second.first = maxwl;
+
 			}
 			unordered_map<int, vector<int>>SS;
 			unordered_map<string, pair<int, string>> Q;
@@ -117,7 +119,7 @@ void Graph::setWL(Board& B) {
 				tt = s.second.second.first - QWL[s.first] + slack[p.name] / B.DisplacementDelay;
 				int wl = 0;
 				for (auto& it : adjList[index]) {
-					if (it.to == s.second.first) {
+					if (it.to == s.second.first) {	
 						wl = it.weight + slack[p.name] / B.DisplacementDelay;
 					}
 				}
@@ -134,18 +136,23 @@ void Graph::setWL(Board& B) {
 	for (auto& s : Dcon) {
 		for (auto& s1 : s.second) {
 			DCON[nodes[s.first].name] = make_pair(nodes[s1.second[0]].name, s1.second[1]);
+			if (nodes[s1.first].name.find("INPUT")!=string::npos) {
+				continue;
+			}
+		
+				
 			if (Qcon[nodes[s1.first].name].find(nodes[s1.second[2]].name) == Qcon[nodes[s1.first].name].end() || Qcon[nodes[s1.first].name][nodes[s1.second[2]].name] > s1.second[3])
 			{
 				Qcon[nodes[s1.first].name][nodes[s1.second[2]].name] = s1.second[3];
 			}
 		}
 	}
-	fout << "D: " << endl;
+	//fout << "D: " << endl;
 	for (auto& s : DCON) {
 		fout << s.first << " " << s.second.first << " " << s.second.second << " " << endl;
 
 	}
-	fout << "Q: " << endl;
+	//fout << "Q: " << endl;
 	for (auto& s : Qcon) {
 		for (auto& s1 : s.second) {
 			fout << s.first << " " << s1.first << " " << s1.second << " " << endl;
@@ -156,13 +163,20 @@ void Graph::setWL(Board& B) {
 }
 void Graph::dfs(int index, int WL, unordered_map<int, pair<int, pair<int, int>>>& S, int tmp, unordered_map<int, int>&QWL, int &maxwl, unordered_map<int, int>&pinwl) {
 	unordered_map<int, int> dist;
+
 	for (auto& it : adjList[index]) {
 		if (it.f == 1) {
+			if (tmp == 0) {
+
+				tmp = it.to;
+			}
 			if (S.find(it.to) == S.end() || S[it.to].second.first < WL + it.weight) {
 				if (QWL[it.to] < WL) {
 					QWL[it.to] = WL;
 				}
+				
 				S[it.to] = make_pair(tmp, make_pair(WL + it.weight, it.from));
+				
 				if (WL + it.weight > maxwl) {
 					maxwl = WL + it.weight;
 				}
@@ -171,10 +185,12 @@ void Graph::dfs(int index, int WL, unordered_map<int, pair<int, pair<int, int>>>
 		else
 		{
 			if (tmp == 0) {
+				
 				tmp = it.to;
 			}	
 			if ( !pinwl[it.to] || pinwl[it.to] < it.weight + pinwl[it.from]) {
 				pinwl[it.to] = it.weight + pinwl[it.from];
+				
 				dfs(it.to, WL + it.weight, S, tmp, QWL, maxwl, pinwl);
 		    }
 		}
