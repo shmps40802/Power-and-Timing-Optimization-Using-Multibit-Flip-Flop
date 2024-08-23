@@ -171,7 +171,7 @@ void Cluster::kmeans(Board& board) {
 			}
 			else {
 				t++;
-				if (t > 2)break;
+				if (t > 1)break;
 			}
 			//threads.emplace_back(&Cluster::Silhouette, this, DataPoints[i], TK, ref(Silhouettescore), ref(rec));
 			TK++;
