@@ -587,7 +587,8 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 					string dname;
 					string in;
 					size_t pos2 = it.find("/");
-					int cnum2 = stoi(it.substr(1, pos2));
+					int cnum2 = -1;
+					if (pos2 != string::npos) cnum2 = stoi(it.first.substr(1, pos2));
 					if (cnum1 == cnum2) {
 						string tmp2 = nshift(it.substr(it.find("/") + 1, string::npos), w);
 						if (F2.getN() == 1) tmp2 = "D";
