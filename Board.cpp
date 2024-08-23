@@ -1004,11 +1004,17 @@ int Board::getInstsize() {
 void Board::setDelay(string Q, string in, string D, int WL) {
 	auto end = string::npos;
 	size_t pos2 = Q.find("/");
-	int cnum2 = stoi(Q.substr(1, pos2));
-	string qname = Q.substr(pos2 + 1, end);
-	float delay = InstToFlipFlop[cnum2].getQpinDelay() + WL * DisplacementDelay;
-	if(Q.find("Q") != end) Qconnect[Q].insert(D);
-	Ddelay[D][Q] = make_pair(delay, in);
+	float delay =  WL * DisplacementDelay;
+	if (pos2 != end) {
+		int cnum2 = stoi(Q.substr(1, pos2));
+		string qname = Q.substr(pos2 + 1, end);
+		delay += InstToFlipFlop[cnum2].getQpinDelay();
+		Qconnect[Q].insert(D);
+		Ddelay[D][Q] = make_pair(delay, in);
+	}
+	else {
+		Ddelay[D][Q] = make_pair(delay, in);
+	}
 }
 void Board::addNet2(string s1, string s2) {
 	auto end = string::npos;
