@@ -1007,7 +1007,7 @@ void Board::setDelay(string Q, string in, string D, int WL) {
 	int cnum2 = stoi(Q.substr(1, pos2));
 	string qname = Q.substr(pos2 + 1, end);
 	float delay = InstToFlipFlop[cnum2].getQpinDelay() + WL * DisplacementDelay;
-	Qconnect[Q].insert(D);
+	if(Q.find("Q") != end) Qconnect[Q].insert(D);
 	Ddelay[D][Q] = make_pair(delay, in);
 }
 void Board::addNet2(string s1, string s2) {
