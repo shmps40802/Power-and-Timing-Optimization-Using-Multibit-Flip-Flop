@@ -13,8 +13,8 @@ Cluster::Cluster() {
 	maxBits = 4;
 	MinVariance = DBL_MAX;
 	Max = 3000000;
-	p = 3;
-	q = 3;
+	p = 5;
+	q = 10;
 	// initializeVector(k, l);
 }
 
@@ -103,6 +103,29 @@ void Cluster::readData(Board& board) {
 		}
 	}
 	sort(FlipFlopLib.begin(), FlipFlopLib.end(), compareFlipFlop); //sort FlipFlop library by number of bits and name
+	int width = (*board.PlacementRows.begin()).second[0];
+	for (auto& b : availableBits) {
+		map<int, int> cnt;
+		int t = 0;
+		int m = 0;
+		for (size_t i = 0; i < FlipFlopLib.size(); i++) {
+			if (FlipFlopLib[i].getN() != b) continue;
+			int n = FlipFlopLib[i].getWidth() / width + 1;
+			cnt[n]++;
+			if (m < cnt[n]) {
+				t = n;
+				m = cnt[n];
+			}
+		}
+		for (size_t i = 0; i < FlipFlopLib.size(); i++) {
+			if (FlipFlopLib[i].getN() != b) continue;
+			int n = FlipFlopLib[i].getWidth() / width + 1;
+			if (t != n) {
+				FlipFlopLib.erase(FlipFlopLib.begin() + i);
+				i--;
+			}
+		}
+	}
 }
 float Cluster::Silhouette(vector<FlipFlop> points, int TK) {
 	float a = 0, b = 0, avea, aveb, coua = 0, coub = 0;
