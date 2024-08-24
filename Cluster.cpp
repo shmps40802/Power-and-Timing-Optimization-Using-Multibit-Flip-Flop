@@ -126,16 +126,17 @@ void Cluster::readData(Board& board) {
 	}
 }
 float Cluster::Silhouette(vector<FlipFlop> points, int TK) {
-	float a = 0, b = 0, avea, aveb, coua = 0, coub = 0;
 	kMeansClustering(points, epochs, TK);
+	float a = 0, b = 0, avea, aveb, coua = 0, coub = 0;
 	for (size_t j = 0; j < points.size() - 1; j++) {//Silhouettescore
 		for (size_t m = j + 1; m < points.size(); m++) {
+			float inc = (float) abs(points[j].getX() - points[m].getX()) + abs(points[j].getY() - points[m].getY());
 			if (points[j].getCluster() == points[m].getCluster()) {
-				a += abs(points[j].getX() - points[m].getX()) + abs(points[j].getY() - points[m].getY());
+				a += inc;
 				coua++;
 			}
 			else {
-				b += abs(points[j].getX() - points[m].getX()) + abs(points[j].getY() - points[m].getY());
+				b += inc;
 				coub++;
 			}
 		}
