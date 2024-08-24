@@ -11,7 +11,6 @@ Cluster::Cluster() {
 	r = 10;
 	epochs = 5;
 	maxBits = 4;
-	MinVariance = DBL_MAX;
 	Max = 3000000;
 	p = 5;
 	q = 10;
@@ -25,7 +24,6 @@ Cluster::Cluster(int n, int k, int l, int r, int epochs, int maxBits, double Min
 	this->r = r;
 	this->epochs = epochs;
 	this->maxBits = maxBits;
-	this->MinVariance = MinVariance;
 	this->Max = Max;
 	this->p = p;
 	this->q = q;
