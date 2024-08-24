@@ -32,12 +32,14 @@ struct bin{
 	int siteLLY;
 	int siteVertical; //number of sites in the vertical direction, 14
 	int siteHorizontal; //number of sites in the horizontal direction, 57
+	int occupiedArea;
+	int availableArea;
 	vector<int> flipflops;
 	vector<int> gates;
 	vector<vector<int>> sites; //0: empty, 1: occupied
 	bin() {}
 	bin(int x, int y)
-		: x(x), y(y) {}
+		: x(x), y(y), availableArea(0), occupiedArea(0) {}
 
 	bool operator==(const bin& other) const {
 		return x == other.x && y == other.y;
@@ -106,7 +108,7 @@ public:
 	void legalizationInBin(Board&, bin&);
 	bool isLegalInBin(bin& bin, int, int, int, int); // no overlap or out of boundary
 
-	void replaceFailedFFs(Board&, vector<vector<int>>&, vector<int>&, int, int, int, int);
+	void replaceFailedFFs(Board&, vector<vector<int>>&, vector<int>&, int, int, int, int, int, int, int);
 	bool isLegalInRegion(vector<vector<int>>&, int, int, int, int, int, int, int, int); // no overlap or out of boundary
 	bool pushAndPlace(Board&, vector<vector<int>>&, vector<tuple<int, int, int>>&, int&, int, int, int, int, int, int, int, int, int);
 	bool push(Board&, vector<vector<int>>&, vector<tuple<int, int, int>>&, int&, int, int, int, int, int, int, int);
