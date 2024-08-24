@@ -45,7 +45,7 @@ void Cluster::kMeansClustering(vector<FlipFlop>& points, int epochs, int kc) {
 	size_t size = points.size();
 	set<int> S;
 	for (int i = 0; i < kc; i++) { //find k centroids
-		int s = (int) rand() % size;
+		int s = (int)rand() % size;
 		while (S.find(s) != S.end()) {
 			s = rand() % size;
 		}
@@ -72,8 +72,8 @@ void Cluster::kMeansClustering(vector<FlipFlop>& points, int epochs, int kc) {
 		}
 		for (auto& it : points) {
 			int clusterId = it.getCluster();
-			sumX[clusterId] += (double) it.getX() / counts[clusterId];
-			sumY[clusterId] += (double) it.getY() / counts[clusterId];
+			sumX[clusterId] += (double)it.getX() / counts[clusterId];
+			sumY[clusterId] += (double)it.getY() / counts[clusterId];
 		}
 		for (int i = 0; i < kc; i++) {
 			centroids[i].setPos(sumX[i], sumY[i]); //new cluster centroid position
@@ -81,7 +81,7 @@ void Cluster::kMeansClustering(vector<FlipFlop>& points, int epochs, int kc) {
 	}
 }
 double Cluster::distance(FlipFlop a, FlipFlop b) {
-	return (double) abs(a.getX() - b.getX()) + abs(a.getY() - b.getY());
+	return (double)abs(a.getX() - b.getX()) + abs(a.getY() - b.getY());
 }
 void Cluster::readData(Board& board) {
 	for (auto& it : board.FlipFlopByClk) {
@@ -91,7 +91,6 @@ void Cluster::readData(Board& board) {
 		}
 		DataPoints.push_back(tmp);
 	}
-	KLClusters.resize(DataPoints.size());
 	for (auto& it : board.FlipFlopLib) {
 		FlipFlopLib.push_back(it.second);
 		int bits = it.second.getN();
@@ -130,7 +129,7 @@ float Cluster::Silhouette(vector<FlipFlop> points, int TK) {
 	float a = 0, b = 0, avea, aveb, coua = 0, coub = 0;
 	for (size_t j = 0; j < points.size() - 1; j++) {//Silhouettescore
 		for (size_t m = j + 1; m < points.size(); m++) {
-			float inc = (float) abs(points[j].getX() - points[m].getX()) + abs(points[j].getY() - points[m].getY());
+			float inc = (float)abs(points[j].getX() - points[m].getX()) + abs(points[j].getY() - points[m].getY());
 			if (points[j].getCluster() == points[m].getCluster()) {
 				a += inc;
 				coua++;
@@ -147,22 +146,44 @@ float Cluster::Silhouette(vector<FlipFlop> points, int TK) {
 }
 void Cluster::kmeans(Board& board) {
 	readData(board);
-	cout << "start kmeans\n";
+	cout << "startkmean\n";
 	for (size_t i = 0; i < DataPoints.size(); i++) {
+		kmean2t(board, DataPoints[i]);
+	}
+	cout << "start clustering\n";
+	int t = 0;
+	int val = 0;
+	for (auto& it : KLClusters) {
+		int c = 0;
+		t++;
+		cout << t << "\n";
+		for (auto& it2 : it) {
+			val += it.size();
+			if (it2.size() != 0) {
+				c++;
+				cout << c << "\n";
+				findOptimalGrouping(it2, board);
+				cout << "Cost : " << board.Cost() << "\n";
+			}
+		}
+
+	}
+}
+void Cluster::kmean2t(Board& board,vector<FlipFlop>datatmp) {
+	vector<vector<FlipFlop>>tmp2;
 		size_t TK = 2;       //Silhouettescore
 		int rec = 0;
 		float Silhouettescore = -1;
 		int t = 0;
-		//vector<thread> threads;
-		while (TK < DataPoints[i].size()) {//Silhouettescore
-			if (DataPoints[i].size() < sqrt(board.getInstsize()) / 10) {
+		while (TK < datatmp.size()) {//Silhouettescore
+			if (datatmp.size() < sqrt(board.getInstsize()) / 10) {
 				rec = 1;
-				for (auto& it : DataPoints[i]) {
+				for (auto& it : datatmp) {
 					it.setCluster(0);
 				}
 				break;
 			}
-			float tmp = Silhouette(DataPoints[i], TK);
+			float tmp = Silhouette(datatmp, TK);
 			if (tmp > Silhouettescore) {
 				Silhouettescore = tmp;
 				rec = TK;
@@ -172,67 +193,29 @@ void Cluster::kmeans(Board& board) {
 				t++;
 				if (t > 1)break;
 			}
-			//threads.emplace_back(&Cluster::Silhouette, this, DataPoints[i], TK, ref(Silhouettescore), ref(rec));
 			TK++;
 		}
-		/*for (auto& t : threads) {
-			t.join();
-		}*/
-		kMeansClustering(DataPoints[i], epochs, rec);
-		KLClusters[i].resize(rec);
-		for (auto& p : DataPoints[i]) {
-			KLClusters[i][p.getCluster()].push_back(p);
-		}
-	}
-	//----------------------------------------------------------------------------------------
-	//int sum = 0;
-	//for (auto& it : KClusters) {
-	//	sum += it.size();
-	//}
-	//cout<<"number of Flip Flop in KClusters:  "<<sum<<endl;
-	//sum = 0;
-	//for (auto& it : KLClusters) {
-	//	for (auto& it2 : it) {
-	//		sum += it2.size();
-	//	}
-	//}
-	//cout << "number of Flip Flop in KLClusters:  " << sum << endl;
-	//map<int, int> cnt;  //flip flop number distribution in cluster
-	//sum = 0;
-	//for (auto &it : KCounts) {
-	//	for (auto& it2 : it) {
-	//		if (cnt.find(it2) == cnt.end()) {
-	//			cnt.insert({ it2,1 });
-	//		}
-	//		else {
-	//			cnt.at(it2)++;
-	//		}
-	//	}
-	//}
-	//for (auto& it : cnt) {
-	//	cout << "flip flop numbers: " << it.first << "   counts: " << it.second << endl;
-	//}
-	//cout << "KLClusters.size()  " << KLClusters.size() << endl;
-	//for (int i = 0; i < KLClusters.size(); i++) {
-	//	cout << "KLClusters[" << i << "].size()  " << KLClusters[i].size() << endl;
-	//}
-	//----------------------------------------------------------------------------------------
-	cout << "start clustering\n";
-	int t = 0;
-	for (auto& it : KLClusters) {
-		int c = 0;
-		t++;
-		cout << t << "\n";
-		for (auto& it2 : it) {
-			if (it2.size() != 0) {
-				c++;
-				cout << c << "\n";
-				findOptimalGrouping(it2, board);
-				cout << "Cost : " << board.Cost() << "\n";
+		kMeansClustering(datatmp, epochs, rec);	
+		tmp2.resize(rec);
+		if (datatmp.size() > 1000) {
+			for (auto& p : datatmp) {
+				tmp2[p.getCluster()].push_back(p);
+			}
+			for (size_t i = 0; i < tmp2.size(); i++) {
+				kmean2t(board, tmp2[i]);
 			}
 		}
-	}
+		else
+		{
+			for (auto& p : datatmp) {
+				tmp2[p.getCluster()].push_back(p);				
+			}
+			KLClusters.push_back(tmp2);
+		}	
+	
+	tmp2.clear();
 }
+
 void Cluster::findOptimalGrouping(vector<FlipFlop>& points, Board& board) {
 	//already debanking every Flip Flop to smallest bit
 	auto min_it = min_element(availableBits.begin(), availableBits.end());
