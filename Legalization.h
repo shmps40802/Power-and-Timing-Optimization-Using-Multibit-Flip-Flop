@@ -11,6 +11,7 @@
 #include <functional>
 #include <ctime>
 #include <tuple>
+#include <algorithm>
 #include "Board.h"
 #include "CellSpreading.h"
 using namespace std;
@@ -32,14 +33,14 @@ struct bin{
 	int siteLLY;
 	int siteVertical; //number of sites in the vertical direction, 14
 	int siteHorizontal; //number of sites in the horizontal direction, 57
-	int occupiedArea;
-	int availableArea;
+	int occupiedArea; //for cell spreading
+	int placedArea; //for legalization
 	vector<int> flipflops;
 	vector<int> gates;
 	vector<vector<int>> sites; //0: empty, 1: occupied
 	bin() {}
 	bin(int x, int y)
-		: x(x), y(y), availableArea(0), occupiedArea(0) {}
+		: x(x), y(y), occupiedArea(0), placedArea(0) {}
 
 	bool operator==(const bin& other) const {
 		return x == other.x && y == other.y;
@@ -85,13 +86,15 @@ private:
 	int maxFailedVerticalDisplacement; //maximum failed flipflop vertical displacement of the cells (counted in sites)
 	int maxReplaceNum; //maximum number to replace failed flipflops
 	int maxFFPushed; //maximum flipflop number to be pushed 
+	long long int totalCellArea;
 	vector<vector<bin>> bins;
 	vector<placementRow> placementRows;
 	vector<reference_wrapper<bin>> overfilledBins;
 	vector<vector<reference_wrapper<bin>>> targetBins;
 	//vector<pair<reference_wrapper<bin>, int>> placeFailedFlipFlops; //bin, flipflop index
-	vector<int> placeFailedFlipFlops; //flipflop index
+	vector<vector<int>> placeFailedFlipFlops; //flipflop index
 	vector<vector<int>> grids; //0: empty, -1: gates, others: flipflop index
+	vector<vector<int>> placeCosts; //cost of placing flipflop in the site, integer(0 ~ 8): empty(8 - occupied site next to the site), INT_MAX: can't place(occupied by gates or flipflops, reach bin density constraint)
 	mutex mtx;
 public:
 	Legalization(Board&);
@@ -102,18 +105,27 @@ public:
 	void calculateDensity(Board&);
 	void findOverfilledBins();
 	void cellSpreading(Board&);
-	vector<int> findNearestCells(Board&, bin&, bin&, int);
+	vector<int> findNearestCells(Board&, bin&, bin&, long long int);
 	void moveCells(Board&, bin&, bin&, vector<int>);
 	void parallelLegalization(Board&);
+	void placeGates(Board&);
+	void placeFFs(Board&, vector<reference_wrapper<bin>>&, vector<int>&, int, int, int, int);
+	bool isLegal(int, int, int, int, int, int, int, int);
+	int calculatePlaceCost(int, int, int, int, int);
+	void updateNearCosts(int, int, int, int, int, int, int, int);
+	void updateBinDensity(int, int, int, int);
+
+
 	void legalizationInBin(Board&, bin&);
 	bool isLegalInBin(bin& bin, int, int, int, int); // no overlap or out of boundary
 
-	void replaceFailedFFs(Board&, vector<vector<int>>&, vector<int>&, int, int, int, int, int, int, int);
+	void replaceFailedFFs(Board&, vector<vector<int>>&, vector<int>&, int, int, int, int, int, int, int, bool);
 	bool isLegalInRegion(vector<vector<int>>&, int, int, int, int, int, int, int, int); // no overlap or out of boundary
 	bool pushAndPlace(Board&, vector<vector<int>>&, vector<tuple<int, int, int>>&, int&, int, int, int, int, int, int, int, int, int);
 	bool push(Board&, vector<vector<int>>&, vector<tuple<int, int, int>>&, int&, int, int, int, int, int, int, int);
 	bool checkLegal(Board&);
 	bool checkSingleFFLegal(Board&, int);
 	bool checkSingleGateLegal(Board&, int);
+	vector<int> changeFF(Board&, int, int, int);
 };
 #endif
