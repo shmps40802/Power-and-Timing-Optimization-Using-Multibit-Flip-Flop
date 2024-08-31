@@ -62,8 +62,8 @@ private:
 	vector<Point> Output;                              // output pin(s)
 	map<string, FlipFlop> FlipFlopLib;                 // Cellnumber to FlipFlop
 	map<string, Gate> GateLib;                         // Cellnumber to Gate
-	map<int, FlipFlop> InstToFlipFlop;       // instnumber to FlipFlop
-	map<int, Gate> InstToGate;               // instnumber to Gate
+	map<int, FlipFlop> InstToFlipFlop;                 // instnumber to FlipFlop
+	map<int, Gate> InstToGate;                         // instnumber to Gate
 	vector<vector<int>> FlipFlopByClk;                 // flipflop(s) with the same clk
 	unordered_map<int, unordered_set<string>> Net;     // netnumer to point name
 	unordered_map<string, int> PointToNet;             // point name to net number C1/D -> (net)1
