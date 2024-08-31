@@ -172,8 +172,8 @@ void Cluster::kmeans(Board& board) {
 void Cluster::kmean2t(Board& board,vector<FlipFlop>datatmp) {
 	vector<vector<FlipFlop>>tmp2;
 		size_t TK = 2;       //Silhouettescore
-		int rec = 0;
-		float Silhouettescore = -1;
+		int rec = 1;
+		float Silhouettescore = -2;
 		int t = 0;
 		while (TK < datatmp.size()) {//Silhouettescore
 			if (datatmp.size() < sqrt(board.getInstsize()) / 10) {
