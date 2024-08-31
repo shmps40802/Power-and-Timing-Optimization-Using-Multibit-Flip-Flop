@@ -60,7 +60,7 @@ bool CellSpreading::Dijkstra() {
     }
     return true;
 }
-void CellSpreading::addedge(int from, int to, int capacity, int cost) {
+void CellSpreading::addedge(int from, int to, long long int capacity, long long int cost) {
 	G[from].push_back(arcs.size()); //edge index in edges
 	arcs.push_back(Arc(from, to, capacity, cost)); //forward edge
 	G[to].push_back(arcs.size()); //edge index in edges
@@ -69,12 +69,12 @@ void CellSpreading::addedge(int from, int to, int capacity, int cost) {
 void CellSpreading::printFlows() {
     for (const auto& e : arcs) {
         if (e.capacity > 0) { //print only forward edges
-            int flow = e.capacity - e.residual;
+            long long int flow = e.capacity - e.residual;
             std::cout << "Edge from " << e.from << " to " << e.to << " has flow: " << flow << endl;
         }
     }
 }
-int CellSpreading::getFlow(int from, int to) {
+long long int CellSpreading::getFlow(int from, int to) {
     for (const auto& e : arcs) {
         if (e.from == from && e.to == to) {
             return e.capacity - e.residual;
