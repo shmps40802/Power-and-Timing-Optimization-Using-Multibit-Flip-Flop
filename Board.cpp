@@ -46,16 +46,11 @@ void sort(map<string, FlipFlop>& M) {
 }
 string nshift(string pin, int n) {
 	string res;
-	string tmp = pin.substr(1);
-	int i = 0;
-	if (tmp != "") {
-		i = stoi(tmp);
-	}
 	if (pin.substr(0, 1) == "D") {
-		res = "D" + to_string(n + i);
+		res = "D" + to_string(n);
 	}
 	else if (pin.substr(0, 1) == "Q") {
-		res = "Q" + to_string(n + i);
+		res = "Q" + to_string(n);
 	}
 	return res;
 }
@@ -588,8 +583,15 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 					size_t pos2 = it.first.find("/");
 					int cnum2 = -1;
 					if (pos2 != string::npos) cnum2 = stoi(it.first.substr(1, pos2));
-					if (cnum1 == cnum2) {
-						string tmp2 = nshift(it.first.substr(pos2 + 1, string::npos), w);
+					int t = -1;
+					for (size_t i = 0; i < F1.size(); i++) {
+						if (F1[i].getInstNum() == cnum2) {
+							t = i;
+							break;
+						}
+					}
+					if (t != -1) {
+						string tmp2 = nshift(it.first.substr(pos2 + 1, string::npos), t);
 						if (F2.getN() == 1) tmp2 = "Q";
 						qname = FlipFlopName + "/" + tmp2;
 					}
@@ -626,8 +628,15 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 					string in;
 					size_t pos2 = it.find("/");
 					int cnum2 = stoi(it.substr(1, pos2));
-					if (cnum1 == cnum2) {
-						string tmp2 = nshift(it.substr(it.find("/") + 1, string::npos), w);
+					int t = -1;
+					for (size_t i = 0; i < F1.size(); i++) {
+						if (F1[i].getInstNum() == cnum2) {
+							t = i;
+							break;
+						}
+					}
+					if (t != -1) {
+						string tmp2 = nshift(it.substr(it.find("/") + 1, string::npos), t);
 						if (F2.getN() == 1) tmp2 = "D";
 						dname = FlipFlopName + "/" + tmp2;
 					}
