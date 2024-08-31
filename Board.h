@@ -20,7 +20,7 @@ struct node {
 	int index;
 	node() : sx(INT_MIN), ex(INT_MAX), sy(INT_MIN), ey(INT_MAX), index(-1) {}
 	node(int sx, int ex, int sy, int ey, int index)
-	: sx(sx), ex(ex), sy(sy), ey(ey), index(index) {}
+		: sx(sx), ex(ex), sy(sy), ey(ey), index(index) {}
 	node(int index) :sx(INT_MIN), ex(INT_MAX), sy(INT_MIN), ey(INT_MAX), index(index) {}
 	bool operator<(node n) const {
 		if (index < 0) return false;
@@ -56,6 +56,8 @@ private:
 	int CellNumber;
 	int minBit;
 	int maxBit;
+	string inFile;
+	string outFile;
 	vector<Point> Input;                               // input pin(s)
 	vector<Point> Output;                              // output pin(s)
 	map<string, FlipFlop> FlipFlopLib;                 // Cellnumber to FlipFlop
@@ -71,11 +73,11 @@ private:
 	map<int, map<int, float>> BinDensity;              // bin density of board
 	unordered_map<string, unordered_map<string, pair<float, string>>> Ddelay;
 	unordered_map<string, unordered_set<string>> Qconnect;
-	unordered_map<string, unordered_set<string>> Net2; 
+	unordered_map<string, unordered_set<string>> Net2;
 	unordered_map<string, pair<string, int>> Dcon;//D  DConect DWL
 	unordered_map<string, unordered_map<string, int>> Qcon;//Q  Qconect QWL
 public:
-	Board();
+	Board(string, string);
 	~Board();
 	void ReadFile(void);                                   // read file
 	void Display(void);
