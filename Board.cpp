@@ -54,12 +54,12 @@ string nshift(string pin, int n) {
 	}
 	return res;
 }
-bool isIn(string s) {
+bool isIn(string& s) {
 	auto end = string::npos;
 	if (s.find("INPUT") != end || s.find("/OUT") != end || s.find("Q") != end) return true;
 	else return false;
 }
-bool isOut(string s) {
+bool isOut(string& s) {
 	auto end = string::npos;
 	if (s.find("OUTPUT") != end || s.find("/IN") != end || s.find("D") != end) return true;
 	else return false;
@@ -360,7 +360,7 @@ void Board::Plot() {
 	}
 	outFile.close();
 }
-Point Board::NametoPoint(string PinName) {
+Point Board::NametoPoint(string& PinName) {
 	// flipflop gate pin
 	size_t pos = PinName.find("/");
 	if (pos != string::npos) {
@@ -403,11 +403,11 @@ Cell Board::getCell(int cnum) {
 		return Cell();
 	}
 }
-void Board::addNet(int netnum, string pin) {
+void Board::addNet(int netnum, string& pin) {
 	Net[netnum].insert(pin);
 	PointToNet[pin] = netnum;
 }
-void Board::removeNet(int netnum, string pin) {
+void Board::removeNet(int netnum, string& pin) {
 	Net[netnum].erase(pin);
 	PointToNet.erase(pin);
 }
@@ -459,20 +459,11 @@ void Board::Qslack(string PinName, float& NS, int x, int y, float dq) {
 			Max = delay > Max ? delay : Max;
 			if (qpin == PinName) {
 				FlipFlop F1 = InstToFlipFlop[cnum1];     // Q
-				Point p1 = NametoPoint(PinName);
-				int x1 = F1.getX() + p1.x;
-				int y1 = F1.getY() + p1.y;
-				Point p2 = NametoPoint(f.second.second); // in
-				int x2 = p2.x;
-				int y2 = p2.y;
-				size_t pos3 = f.second.second.find("/");
-				if (pos3 != string::npos) {
-					int cnum3 = stoi(f.second.second.substr(1, pos3));
-					Cell F3 = getCell(cnum3);
-					x2 += F3.getX();
-					y2 += F3.getY();
-				}
-				int WL1 = abs(x1 - x2) + abs(y1 - y2);
+				Point p1 = getPos(f.first);
+				int x1 = p1.x;
+				int y1 = p1.y;
+				Point p2 = getPos(f.second.second); // in
+				int WL1 = abs(x1 - p2.x) + abs(y1 - p2.y);
 				int WL2 = abs(x - x2) + abs(y - y2);
 				dWL = WL2 - WL1;
 				delay += (float) dq + dWL * DisplacementDelay;
@@ -869,7 +860,7 @@ void Board::Debanking(FlipFlop F1, vector<FlipFlop>& F2) {
 	}
 	InstToFlipFlop.erase(F1.getInstNum());
 }
-float Board::bankingCompare(vector<FlipFlop> prev, FlipFlop cur) {
+float Board::bankingCompare(vector<FlipFlop>& prev, FlipFlop& cur) {
 	int N = cur.getN();
 	float sum = 0;
 	float PowerComp = cur.getPower();
@@ -914,7 +905,7 @@ float Board::bankingCompare(vector<FlipFlop> prev, FlipFlop cur) {
 	sum += Alpha * NSComp + Beta * PowerComp + Gemma * AreaComp;
 	return sum;
 }
-float Board::singleCompare(FlipFlop prev, FlipFlop cur) {
+float Board::singleCompare(FlipFlop& prev, FlipFlop& cur) {
 	int N = cur.getN();
 	float sum = 0;
 	float PowerComp = cur.getPower();
