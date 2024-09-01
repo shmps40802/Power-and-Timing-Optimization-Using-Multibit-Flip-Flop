@@ -85,16 +85,16 @@ public:
 	void Plot();
 	Point NametoPoint(string&);
 	Cell getCell(int);                                     // get FlipFlop Gate
-	void addNet(int, string&);                              // add pin to the net
-	void removeNet(int, string&);                           // remove pin from the net
+	void addNet(int, string&);                             // add pin to the net
+	void removeNet(int, string&);                          // remove pin from the net
 	void Dslack(string, float&, int, int);                 // compare slack of D pin
 	void Qslack(string, float&, int, int, float);          // compare slack connect to Q pin
 	void updateDSlack(string, float&, int, int);           // update slack of D pin
 	void updateQSlack(string, int, int, float);            // update slack of D pin connected to Q pin
 	void Banking(vector<FlipFlop>, FlipFlop&);             // only banking 1 bit
 	void Debanking(FlipFlop, vector<FlipFlop>&);           // only debanking into 1 bit
-	float bankingCompare(vector<FlipFlop>&, FlipFlop&);      // compare flipflop with the same bit(s)
-	float singleCompare(FlipFlop&, FlipFlop&);               // compare flipflop before and after banking
+	float bankingCompare(vector<FlipFlop>&, FlipFlop&);    // compare flipflop with the same bit(s)
+	float singleCompare(FlipFlop&, FlipFlop&);             // compare flipflop before and after banking
 	bool Check();                                          // check flipflop whether on grid point or overlapping
 	Point getPos(string);
 	int dist(string&, string&);
@@ -112,5 +112,6 @@ public:
 	void addNet2(string, string);
 	void removeNet2(string, string);
 	void setwl(unordered_map<string, pair<string, int>> DCON, unordered_map<string, unordered_map<string, int>> Qcon);
+	void bankall(void);
 };
 #endif
