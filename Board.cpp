@@ -46,11 +46,13 @@ void sort(map<string, FlipFlop>& M) {
 }
 string nshift(string pin, int n) {
 	string res;
+	int i = 0;
+	if (pin.size() != 1) i = stoi(pin.substr(1));
 	if (pin.substr(0, 1) == "D") {
-		res = "D" + to_string(n);
+		res = "D" + to_string(n + i);
 	}
 	else if (pin.substr(0, 1) == "Q") {
-		res = "Q" + to_string(n);
+		res = "Q" + to_string(n + i);
 	}
 	return res;
 }
@@ -77,6 +79,7 @@ Board::Board(string inputFile, string outputFile) {
 			break;
 		}
 	}
+	//cout << "initial bit : " << InstToFlipFlop.size() << "\n";
 	for (auto& it : InstToFlipFlop) {
 		int N = it.second.getN();
 		f.setPos(it.second.getX(), it.second.getY());
@@ -258,44 +261,20 @@ void Board::ReadFile(void) {
 		}
 	}
 	fin.close();
-	/*ifstream fin2;
-	fin2.open("connect.txt"); // testcase1_0802.txt
-	string Q, in, D;
-	int WL;
-	while (fin2 >> Q >> in >> D >> WL) {
-		size_t pos1 = D.find("/");
-		auto end = string::npos;
-		int cnum1 = stoi(D.substr(1, pos1));
-		string dname = D.substr(pos1 + 1, end);
-		float slack = InstToFlipFlop[cnum1].getSlack()[dname];
-		size_t pos2 = Q.find("/");
-		int cnum2 = stoi(Q.substr(1, pos2));
-		string qname = Q.substr(pos2 + 1, end);
-		float qdelay = InstToFlipFlop[cnum2].getQpinDelay();
-		Qconnect[Q].insert(D);
-		Ddelay[D][Q] = make_pair(WL * DisplacementDelay + qdelay, in);
-	}
-	fin2.close();*/
 }
 void Board::Display(void) {
 	ofstream fout;
 	fout.open("check.txt");
-	/*for (auto& it : Ddelay) {
-		for (auto& it2 : it.second) {
-			fout << it.first << " " << it2.first << " " << it2.second.first << " " << it2.second.second << "\n";
-		}
-	}
-	for (auto& it : Qconnect) {
-		for (auto& it2 : it.second) {
-			fout << it.first << " " << it2 << "\n";
-		}
-	}*/
-	for (auto& it : Net2) {
-		for (auto& n : it.second) {
-			fout << it.first << " " << n << "\n";
-		}
+	for (auto& it : InstToFlipFlop) {
+		fout << it.second.getInstName() << " " << it.second.getCellName() << " " << it.second.getX() << " " << it.second.getY() << "\n";	
 	}
 	fout.close();
+	/*if (Check()) {
+		cout << "legal board\n";
+	}
+	else {
+		cout << "illegal board\n";
+	}*/
 	//system("pause");
 }
 void Board::outputFile(void) {
@@ -521,6 +500,7 @@ void Board::updateQSlack(string qname, int x, int y, float dq) {
 	}
 }
 void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
+	auto end = string::npos;
 	string FlipFlopName = "C" + to_string(CellNumber);
 	NewFlipFlop.insert(CellNumber);
 	F2.setInstNum(CellNumber);
@@ -573,16 +553,18 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 					}
 					size_t pos2 = it.first.find("/");
 					int cnum2 = -1;
-					if (pos2 != string::npos) cnum2 = stoi(it.first.substr(1, pos2));
+					if (pos2 != end) cnum2 = stoi(it.first.substr(1, pos2));
 					int t = -1;
+					int tt = 0;
 					for (size_t i = 0; i < F1.size(); i++) {
 						if (F1[i].getInstNum() == cnum2) {
-							t = i;
+							t = tt;
 							break;
 						}
+						tt += F1[i].getN();
 					}
 					if (t != -1) {
-						string tmp2 = nshift(it.first.substr(pos2 + 1, string::npos), t);
+						string tmp2 = nshift(it.first.substr(pos2 + 1, end), t);
 						if (F2.getN() == 1) tmp2 = "Q";
 						qname = FlipFlopName + "/" + tmp2;
 					}
@@ -620,11 +602,13 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 					size_t pos2 = it.find("/");
 					int cnum2 = stoi(it.substr(1, pos2));
 					int t = -1;
+					int tt = 0;
 					for (size_t i = 0; i < F1.size(); i++) {
 						if (F1[i].getInstNum() == cnum2) {
-							t = i;
+							t = tt;
 							break;
 						}
+						tt += F1[i].getN();
 					}
 					if (t != -1) {
 						string tmp2 = nshift(it.substr(it.find("/") + 1, string::npos), t);
@@ -664,8 +648,8 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 			}
 			// modify net connection
 			int netnum = PointToNet[prev];
-			addNet(netnum, cur);
-			removeNet(netnum, prev);
+			//addNet(netnum, cur);
+			//removeNet(netnum, prev);
 			auto tmp = Net2[prev];
 			for (auto& it : tmp) {
 				addNet2(it, cur);
@@ -762,7 +746,7 @@ void Board::Debanking(FlipFlop F1, vector<FlipFlop>& F2) {
 				}
 				Ddelay.erase(prev);
 				netnum = PointToNet[prev];
-				removeNet(netnum, prev);
+				//removeNet(netnum, prev);
 				auto tmp2 = Net2[prev];
 				for (auto& it : tmp2) {
 					removeNet2(it, prev);
@@ -814,7 +798,7 @@ void Board::Debanking(FlipFlop F1, vector<FlipFlop>& F2) {
 				}
 				Qconnect.erase(prev);
 				netnum = PointToNet[prev];
-				removeNet(netnum, prev);
+				//removeNet(netnum, prev);
 				auto tmp2 = Net2[prev];
 				for (auto& it : tmp2) {
 					removeNet2(it, prev);
@@ -835,7 +819,7 @@ void Board::Debanking(FlipFlop F1, vector<FlipFlop>& F2) {
 				cout << prev << " not existing\n";
 				break;
 			}
-			addNet(netnum, cur);
+			//addNet(netnum, cur);
 			auto tmp2 = Net2[prev];
 			for (auto& it : tmp2) {
 				addNet2(it, cur);
@@ -845,8 +829,8 @@ void Board::Debanking(FlipFlop F1, vector<FlipFlop>& F2) {
 		w += f.getN();
 	}
 	string prev = prevcell + "/" + prevPin[c].name;
-	int netnum = PointToNet[prev];
-	removeNet(netnum, prev);
+	//int netnum = PointToNet[prev];
+	//removeNet(netnum, prev);
 	auto tmp2 = Net2[prev];
 	for (auto& it : tmp2) {
 		removeNet2(it, prev);
@@ -948,6 +932,9 @@ float Board::singleCompare(FlipFlop& prev, FlipFlop& cur) {
 }
 bool Board::Check() {
 	// not on grid point
+	ofstream fout;
+	fout.open("legal.txt");
+	bool t = 1;
 	for (auto& it : InstToFlipFlop) {
 		int x = it.second.getX();
 		int y = it.second.getY();
@@ -956,16 +943,16 @@ bool Board::Check() {
 				int sx = p.first.first;
 				if (sx > x || ((x - sx) % p.second[0])
 					|| (x - sx) / p.second[0] > p.second[2]) {
-					cout << "x of " << it.first << " not on grid point\n";
+					fout << "x of " << it.first << " not on grid point\n";
 					it.second.display();
-					return false;
+					t = 0;
 				}
 				break;
 			}
 			else if (y < p.first.second) {
-				cout << "y of " << it.first << " not on grid point\n";
+				fout << "y of " << it.first << " not on grid point\n";
 				it.second.display();
-				return false;
+				t = 0;
 			}
 		}
 	}
@@ -987,20 +974,19 @@ bool Board::Check() {
 	for (int i = 0; i < n - 1; i++) {
 		for (int j = i + 1; j < n; j++) {
 			if (arr[i].ex > arr[j].sx) {
-				if ((arr[i].ey > arr[j].sy && arr[i].sy < arr[j].ey)
-					|| (arr[j].ey > arr[i].sy && arr[j].sy < arr[i].ey)) {
+				if (arr[i].ey > arr[j].sy && arr[i].sy < arr[j].ey) {
 					string s1 = "C" + to_string(arr[i].index);
 					string s2 = "C" + to_string(arr[j].index);
-					cout << s1 << " overlapped with " << s2 << "\n";
-					cout << arr[i].sx << " " << arr[i].ex << " " << arr[i].sy << " " << arr[i].ey << "\n";
-					cout << arr[j].sx << " " << arr[j].ex << " " << arr[j].sy << " " << arr[j].ey << "\n";
-					return false;
+					fout << s1 << " overlapped with " << s2 << "\n";
+					fout << arr[i].sx << " " << arr[i].ex << " " << arr[i].sy << " " << arr[i].ey << "\n";
+					fout << arr[j].sx << " " << arr[j].ex << " " << arr[j].sy << " " << arr[j].ey << "\n";
+					t = 0;
 				}
 			}
 			else break;
 		}
 	}
-	return true;
+	return t;
 }
 Point Board::getPos(string Pin) {
 	auto end = string::npos;
@@ -1153,4 +1139,14 @@ void Board::removeNet2(string s1, string s2) {
 void Board::setwl(unordered_map<string, pair<string, int>> DCON, unordered_map<string, unordered_map<string, int>> Qcon) {
 	this->Dcon = DCON;
 	this->Qcon = Qcon;
+}
+void Board::bankall(void) {
+	for (auto& it : InstToFlipFlop) {
+		vector<Point> pins = it.second.getPin();
+		if (pins[0].sourcename[0] != it.second.getInstName() + "/" + pins[0].name) continue;
+		string cellname = it.second.getCellName();
+		FlipFlop tmp = FlipFlopLib[cellname];
+		tmp.setPos(it.second.getX(), it.second.getY());
+		Banking(vector<FlipFlop>{it.second}, tmp);
+	}
 }
