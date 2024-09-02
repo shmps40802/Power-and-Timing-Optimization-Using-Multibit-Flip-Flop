@@ -96,6 +96,7 @@ Board::Board(string inputFile, string outputFile) {
 		}
 		if (!tmp.empty()) FlipFlopByClk.push_back(tmp);
 	}
+	Display();
 	cout << "Clk : " << FlipFlopByClk.size() << " (s)\n";
 }
 Board::~Board() {}
@@ -270,7 +271,7 @@ void Board::Display(void) {
 	ofstream fout;
 	fout.open("check.txt");
 	for (auto& it : InstToFlipFlop) {
-		fout << it.second.getInstName() << " " << it.second.getCellName() << " " << it.second.getX() << " " << it.second.getY() << "\n";	
+		fout << it.second.getInstName() << " " << it.second.getCellName() << " " << it.second.getN() << "\n";	
 	}
 	fout.close();
 }
@@ -597,7 +598,8 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 					string dname;
 					string in;
 					size_t pos2 = it.find("/");
-					int cnum2 = stoi(it.substr(1, pos2));
+					int cnum2 = -1;
+					if (pos2 != end) cnum2 = stoi(it.substr(1, pos2));
 					int t = -1;
 					int tt = 0;
 					for (size_t i = 0; i < F1.size(); i++) {
@@ -608,7 +610,7 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 						tt += F1[i].getN();
 					}
 					if (t != -1) {
-						string tmp2 = nshift(it.substr(it.find("/") + 1, string::npos), t);
+						string tmp2 = nshift(it.substr(pos2 + 1, end), t);
 						if (F2.getN() == 1) tmp2 = "D";
 						dname = FlipFlopName + "/" + tmp2;
 					}
@@ -1022,7 +1024,7 @@ float Board::TNSCost() {
 		for (auto& p : it.second.getPin()) {
 			if (p.type != 'D')continue;
 			float negslack = it.second.getSlack()[p.name];
-			if (negslack < 0)sum -= negslack;
+			if (negslack < 0) sum -= negslack;
 		}
 	}
 	return sum;
