@@ -171,49 +171,53 @@ void Cluster::kmeans(Board& board) {
 }
 void Cluster::kmean2t(Board& board,vector<FlipFlop>datatmp) {
 	vector<vector<FlipFlop>>tmp2;
-		size_t TK = 2;       //Silhouettescore
-		int rec = 1;
-		float Silhouettescore = -2;
-		int t = 0;
-		while (TK < datatmp.size()) {//Silhouettescore
-			if (datatmp.size() < sqrt(board.getInstsize()) / 10) {
-				rec = 1;
-				for (auto& it : datatmp) {
-					it.setCluster(0);
-				}
-				break;
+	size_t TK = 2;       //Silhouettescore
+	int rec = 1;
+	float Silhouettescore = -2;
+	int t = 0;
+	while (TK < datatmp.size()) {//Silhouettescore
+		if (datatmp.size() < sqrt(board.getInstsize()) / 10) {
+			rec = 1;
+			for (auto& it : datatmp) {
+				it.setCluster(0);
 			}
-			float tmp = Silhouette(datatmp, TK);
-			if (tmp > Silhouettescore) {
-				Silhouettescore = tmp;
-				rec = TK;
-				t = 0;
-			}
-			else {
-				t++;
-				if (t > 1)break;
-			}
-			TK++;
+			break;
 		}
-		kMeansClustering(datatmp, epochs, rec);	
-		tmp2.resize(rec);
-		if (datatmp.size() > 1000) {
-			for (auto& p : datatmp) {
-				tmp2[p.getCluster()].push_back(p);
-			}
-			for (size_t i = 0; i < tmp2.size(); i++) {
-				kmean2t(board, tmp2[i]);
-			}
+		float tmp = Silhouette(datatmp, TK);
+		if (tmp > Silhouettescore) {
+			Silhouettescore = tmp;
+			rec = TK;
+			t = 0;
 		}
-		else
-		{
-			for (auto& p : datatmp) {
-				tmp2[p.getCluster()].push_back(p);				
-			}
-			KLClusters.push_back(tmp2);
-		}	
-	
+		else {
+			t++;
+			if (t > 1)break;
+		}
+		TK++;
+	}
+	kMeansClustering(datatmp, epochs, rec);
+	tmp2.resize(rec);
+	for (auto& p : datatmp) {
+		tmp2[p.getCluster()].push_back(p);
+	}
+	vector<vector<FlipFlop>> tmp3;
+	for (size_t i = 0; i < tmp2.size(); i++) {
+		if (tmp2[i].size() > 100) {
+			tmp3.push_back(tmp2[i]);
+			tmp2.erase(tmp2.begin() + i);
+			i--;
+		}
+		else if (tmp2[i].size() == 0) {
+			tmp2.erase(tmp2.begin() + i);
+			i--;
+		}
+	}
+	KLClusters.push_back(tmp2);
+	for (size_t i = 0; i < tmp3.size(); i++) {
+		kmean2t(board, tmp3[i]);
+	}
 	tmp2.clear();
+	tmp3.clear();
 }
 
 void Cluster::findOptimalGrouping(vector<FlipFlop>& points, Board& board) {
