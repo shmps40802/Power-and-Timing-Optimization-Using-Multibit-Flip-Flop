@@ -79,8 +79,8 @@ Board::Board(string inputFile, string outputFile) {
 			break;
 		}
 	}
-	//cout << "initial bit : " << InstToFlipFlop.size() << "\n";
-	for (auto& it : InstToFlipFlop) {
+	auto FFs = InstToFlipFlop;
+	for (auto& it : FFs) {
 		int N = it.second.getN();
 		f.setPos(it.second.getX(), it.second.getY());
 		if (N != 1) {
