@@ -88,6 +88,14 @@ Board::Board(string inputFile, string outputFile) {
 			Debanking(it.second, tmp);
 		}
 	}
+	for (auto& it : Net) {
+		vector<int> tmp;
+		for (auto& it2 : it.second) {
+			size_t pos = it2.find("/");
+			if (it2.find("CLK") != string::npos) tmp.push_back(stoi(it2.substr(1, pos)));
+		}
+		if (!tmp.empty()) FlipFlopByClk.push_back(tmp);
+	}
 	cout << "Clk : " << FlipFlopByClk.size() << " (s)\n";
 }
 Board::~Board() {}
@@ -202,23 +210,19 @@ void Board::ReadFile(void) {
 		fin >> Str >> name >> n;
 		int netnum = stoi(name.substr(3));
 		vector<string> tmp;
-		vector<int> tmp2;
+		//vector<int> tmp2;
 		for (int j = 0; j < n; j++) {
 			fin >> Str >> PinName;
 			auto end = string::npos;
 			size_t pos = PinName.find("/");
 			addNet(netnum, PinName);
 			tmp.push_back(PinName);
-			if (PinName.find("CLK") != end) {
-				tmp2.push_back(stoi(PinName.substr(1, pos)));
-			}
 		}
 		for (size_t j = 0; j < tmp.size() - 1; j++) {
 			for (size_t k = j + 1; k < tmp.size(); k++) {
 				addNet2(tmp[j], tmp[k]);
 			}
 		}
-		if (!tmp2.empty())FlipFlopByClk.push_back(tmp2);
 	}
 	fin >> Str >> BinWidth;
 	fin >> Str >> BinHeight;
@@ -269,13 +273,6 @@ void Board::Display(void) {
 		fout << it.second.getInstName() << " " << it.second.getCellName() << " " << it.second.getX() << " " << it.second.getY() << "\n";	
 	}
 	fout.close();
-	/*if (Check()) {
-		cout << "legal board\n";
-	}
-	else {
-		cout << "illegal board\n";
-	}*/
-	//system("pause");
 }
 void Board::outputFile(void) {
 	ofstream fout;
@@ -648,8 +645,8 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 			}
 			// modify net connection
 			int netnum = PointToNet[prev];
-			//addNet(netnum, cur);
-			//removeNet(netnum, prev);
+			addNet(netnum, cur);
+			removeNet(netnum, prev);
 			auto tmp = Net2[prev];
 			for (auto& it : tmp) {
 				addNet2(it, cur);
@@ -671,6 +668,7 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 	CellNumber++;
 }
 void Board::Debanking(FlipFlop F1, vector<FlipFlop>& F2) {
+	auto end = string::npos;
 	vector<Point> prevPin = F1.getPin();
 	int d = 0, q = 0, c = 0, w = 0;
 	string prevcell = F1.getInstName();
@@ -729,9 +727,9 @@ void Board::Debanking(FlipFlop F1, vector<FlipFlop>& F2) {
 					}
 					size_t pos2 = it.first.find("/");
 					int cnum2 = -1;
-					if (pos2 != string::npos) cnum2 = stoi(it.first.substr(1, pos2));
+					if (pos2 != end) cnum2 = stoi(it.first.substr(1, pos2));
 					if (cnum1 == cnum2) {
-						int nq = stoi(it.first.substr(it.first.find("Q") + 1, string::npos));
+						int nq = stoi(it.first.substr(it.first.find("Q") + 1, end));
 						int nd = stoi(prevPin[d].name.substr(1));
 						string fname = "C" + to_string(instnum + nq - nd);
 						qname = fname + "/" + "Q";
@@ -746,7 +744,7 @@ void Board::Debanking(FlipFlop F1, vector<FlipFlop>& F2) {
 				}
 				Ddelay.erase(prev);
 				netnum = PointToNet[prev];
-				//removeNet(netnum, prev);
+				removeNet(netnum, prev);
 				auto tmp2 = Net2[prev];
 				for (auto& it : tmp2) {
 					removeNet2(it, prev);
@@ -777,14 +775,13 @@ void Board::Debanking(FlipFlop F1, vector<FlipFlop>& F2) {
 					int cnum2 = stoi(it.substr(1, pos2));
 					if (cnum1 == cnum2) {
 						int nq = stoi(prevPin[q].name.substr(1));
-						int nd = stoi(it.substr(it.find("D") + 1, string::npos));
+						int nd = stoi(it.substr(it.find("D") + 1, end));
 						string fname = "C" + to_string(instnum + nd - nq);
 						dname = fname + "/" + "D";
 					}
 					else {
 						dname = it;
 					}
-					Qconnect[cur].insert(dname);
 					pair<float, string> tmp2 = Ddelay[it][prev];
 					if (tmp2.second == it) {
 						in = dname;
@@ -792,13 +789,14 @@ void Board::Debanking(FlipFlop F1, vector<FlipFlop>& F2) {
 					else {
 						in = tmp2.second;
 					}
+					Qconnect[cur].insert(dname);
 					Ddelay[dname][cur] = make_pair(tmp2.first, in);
 					Qconnect[prev].erase(it);
 					Ddelay[it].erase(prev);
 				}
 				Qconnect.erase(prev);
 				netnum = PointToNet[prev];
-				//removeNet(netnum, prev);
+				removeNet(netnum, prev);
 				auto tmp2 = Net2[prev];
 				for (auto& it : tmp2) {
 					removeNet2(it, prev);
@@ -819,7 +817,7 @@ void Board::Debanking(FlipFlop F1, vector<FlipFlop>& F2) {
 				cout << prev << " not existing\n";
 				break;
 			}
-			//addNet(netnum, cur);
+			addNet(netnum, cur);
 			auto tmp2 = Net2[prev];
 			for (auto& it : tmp2) {
 				addNet2(it, cur);
@@ -829,8 +827,8 @@ void Board::Debanking(FlipFlop F1, vector<FlipFlop>& F2) {
 		w += f.getN();
 	}
 	string prev = prevcell + "/" + prevPin[c].name;
-	//int netnum = PointToNet[prev];
-	//removeNet(netnum, prev);
+	int netnum = PointToNet[prev];
+	removeNet(netnum, prev);
 	auto tmp2 = Net2[prev];
 	for (auto& it : tmp2) {
 		removeNet2(it, prev);
@@ -995,7 +993,7 @@ Point Board::getPos(string Pin) {
 	if (pos != string::npos) {
 		int cnum = stoi(Pin.substr(1, pos));
 		Cell c = getCell(cnum);
-		string pname = Pin.substr(pos + 1, string::npos);
+		string pname = Pin.substr(pos + 1, end);
 		p = c.getPoint(pname);
 		p.x += c.getX();
 		p.y += c.getY();
