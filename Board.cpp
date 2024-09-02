@@ -96,7 +96,6 @@ Board::Board(string inputFile, string outputFile) {
 		}
 		if (!tmp.empty()) FlipFlopByClk.push_back(tmp);
 	}
-	Display();
 	cout << "Clk : " << FlipFlopByClk.size() << " (s)\n";
 }
 Board::~Board() {}
@@ -1024,7 +1023,7 @@ float Board::TNSCost() {
 		for (auto& p : it.second.getPin()) {
 			if (p.type != 'D')continue;
 			float negslack = it.second.getSlack()[p.name];
-			if (negslack < 0) sum -= negslack;
+			if (negslack < 0)sum -= negslack;
 		}
 	}
 	return sum;
