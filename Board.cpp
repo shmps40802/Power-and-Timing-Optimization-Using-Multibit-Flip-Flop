@@ -7,7 +7,7 @@
 #include <cassert>
 using namespace std;
 bool ffComp(pair<string, FlipFlop> p1, pair<string, FlipFlop> p2) {
-	return p1.second.getN() > p2.second.getN();
+	return p1.second.FlipFlop::getN() > p2.second.FlipFlop::getN();
 }
 bool fltComp(float f1, float f2) {
 	return f1 > f2;
@@ -74,14 +74,14 @@ Board::Board(string inputFile, string outputFile) {
 	ReadFile();
 	FlipFlop f;
 	for (auto& it : FlipFlopLib) {
-		if (it.second.getN() == 1) {
+		if (it.second.FlipFlop::getN() == 1) {
 			f = it.second;
 			break;
 		}
 	}
 	auto FFs = InstToFlipFlop;
 	for (auto& it : FFs) {
-		int N = it.second.getN();
+		int N = it.second.FlipFlop::getN();
 		f.setPos(it.second.getX(), it.second.getY());
 		if (N != 1) {
 			vector<FlipFlop> tmp(N, f);
@@ -96,7 +96,7 @@ Board::Board(string inputFile, string outputFile) {
 		}
 		if (!tmp.empty()) FlipFlopByClk.push_back(tmp);
 	}
-	cout << "Clk : " << FlipFlopByClk.size() << " (s)\n";
+	//cout << "Clk : " << FlipFlopByClk.size() << " (s)\n";
 }
 Board::~Board() {}
 void Board::ReadFile(void) {
@@ -186,7 +186,7 @@ void Board::ReadFile(void) {
 			for (auto& it : F.getPin()) {
 				string instname = InstName + "/" + it.name;
 				if (it.name == "CLK") {
-					for (int i = 0; i < F.getN(); i++) {
+					for (int i = 0; i < F.FlipFlop::getN(); i++) {
 						InstToFlipFlop[cnum].setsource(it.name, instname);
 					}
 				}
@@ -247,7 +247,7 @@ void Board::ReadFile(void) {
 	}
 	int sum = 0;
 	for (auto& it : InstToFlipFlop) {
-		sum += it.second.getN();
+		sum += it.second.FlipFlop::getN();
 	}
 	for (int i = 0; i < sum; i++) {
 		fin >> Str >> InstName >> name >> slack;
@@ -270,7 +270,7 @@ void Board::Display(void) {
 	ofstream fout;
 	fout.open("check.txt");
 	for (auto& it : InstToFlipFlop) {
-		fout << it.second.getInstName() << " " << it.second.getCellName() << " " << it.second.getN() << "\n";	
+		fout << it.second.getInstName() << " " << it.second.getCellName() << " " << it.second.FlipFlop::getN() << "\n";
 	}
 	fout.close();
 }
@@ -525,7 +525,7 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 					d++;
 				}
 				string D = "D" + to_string(dd + w);
-				if (InstToFlipFlop[CellNumber].getN() == 1) {
+				if (InstToFlipFlop[CellNumber].FlipFlop::getN() == 1) {
 					D = "D";
 				}
 				InstToFlipFlop[CellNumber].setsource(D, p.sourcename[0]);
@@ -558,11 +558,11 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 							t = tt;
 							break;
 						}
-						tt += F1[i].getN();
+						tt += F1[i].FlipFlop::getN();
 					}
 					if (t != -1) {
 						string tmp2 = nshift(it.first.substr(pos2 + 1, end), t);
-						if (F2.getN() == 1) tmp2 = "Q";
+						if (F2.FlipFlop::getN() == 1) tmp2 = "Q";
 						qname = FlipFlopName + "/" + tmp2;
 					}
 					else {
@@ -581,7 +581,7 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 					q++;
 				}
 				string Q = "Q" + to_string(qq + w);
-				if (InstToFlipFlop[CellNumber].getN() == 1) {
+				if (InstToFlipFlop[CellNumber].FlipFlop::getN() == 1) {
 					Q = "Q";
 				}
 				InstToFlipFlop[CellNumber].setsource(Q, p.sourcename[0]);
@@ -606,11 +606,11 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 							t = tt;
 							break;
 						}
-						tt += F1[i].getN();
+						tt += F1[i].FlipFlop::getN();
 					}
 					if (t != -1) {
 						string tmp2 = nshift(it.substr(pos2 + 1, end), t);
-						if (F2.getN() == 1) tmp2 = "D";
+						if (F2.FlipFlop::getN() == 1) tmp2 = "D";
 						dname = FlipFlopName + "/" + tmp2;
 					}
 					else {
@@ -663,7 +663,7 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 			}
 		}
 		InstToFlipFlop.erase(f.getInstNum());
-		w += f.getN();
+		w += f.FlipFlop::getN();
 	}
 	F2 = InstToFlipFlop[CellNumber];
 	CellNumber++;
@@ -702,7 +702,7 @@ void Board::Debanking(FlipFlop F1, vector<FlipFlop>& F2) {
 					d++;
 				}
 				string D = "D" + to_string(dd);
-				if (f.getN() == 1) {
+				if (f.FlipFlop::getN() == 1) {
 					D = "D";
 				}
 				InstToFlipFlop[instnum].setsource(D, prevPin[d].sourcename[0]);
@@ -757,7 +757,7 @@ void Board::Debanking(FlipFlop F1, vector<FlipFlop>& F2) {
 					q++;
 				}
 				string Q = "Q" + to_string(qq);
-				if (f.getN() == 1) {
+				if (f.FlipFlop::getN() == 1) {
 					Q = "Q";
 				}
 				InstToFlipFlop[instnum].setsource(Q, prevPin[q].sourcename[0]);
@@ -808,7 +808,7 @@ void Board::Debanking(FlipFlop F1, vector<FlipFlop>& F2) {
 				while (prevPin[c].type != 'C') {
 					c++;
 				}
-				for (int ij = w; ij < f.getN() + w; ij++) {
+				for (int ij = w; ij < f.FlipFlop::getN() + w; ij++) {
 					InstToFlipFlop[instnum].setsource("CLK", prevPin[c].sourcename[ij]);
 				}
 				prev = prevcell + "/" + prevPin[c].name;
@@ -825,7 +825,7 @@ void Board::Debanking(FlipFlop F1, vector<FlipFlop>& F2) {
 			}
 		}
 		// add cell to location
-		w += f.getN();
+		w += f.FlipFlop::getN();
 	}
 	string prev = prevcell + "/" + prevPin[c].name;
 	int netnum = PointToNet[prev];
@@ -844,7 +844,7 @@ void Board::Debanking(FlipFlop F1, vector<FlipFlop>& F2) {
 	InstToFlipFlop.erase(F1.getInstNum());
 }
 float Board::bankingCompare(vector<FlipFlop>& prev, FlipFlop& cur) {
-	int N = cur.getN();
+	int N = cur.FlipFlop::getN();
 	float sum = 0;
 	float PowerComp = cur.getPower();
 	float AreaComp = (float)cur.getArea();
@@ -889,7 +889,7 @@ float Board::bankingCompare(vector<FlipFlop>& prev, FlipFlop& cur) {
 	return sum;
 }
 float Board::singleCompare(FlipFlop& prev, FlipFlop& cur) {
-	int N = cur.getN();
+	int N = cur.FlipFlop::getN();
 	float sum = 0;
 	float PowerComp = cur.getPower();
 	float AreaComp = (float)cur.getArea();
