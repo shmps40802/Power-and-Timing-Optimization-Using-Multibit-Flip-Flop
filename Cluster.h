@@ -44,7 +44,7 @@ public:
 	void readData(Board&);
 	float Silhouette(vector<FlipFlop>, int);
 	void kmeans(Board&);
-	static bool compareFlipFlop(FlipFlop&, FlipFlop&);
+	static bool compareFlipFlop(const FlipFlop&, const FlipFlop&);
 	void findOptimalGrouping(vector<FlipFlop>&, Board&);
 	FlipFlop updateFlipFlop(FlipFlop, FlipFlop, Board&);
 	void updateBankedFlipFlop(vector<FlipFlop>, FlipFlop, Board&);
