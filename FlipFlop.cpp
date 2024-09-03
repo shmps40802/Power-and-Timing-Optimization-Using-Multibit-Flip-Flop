@@ -10,9 +10,9 @@ FlipFlop::FlipFlop(int N, int width, int height, int P, vector<Point> pin)
 	setPin(pin);
 }
 FlipFlop::~FlipFlop() {
-	
+
 }
-int FlipFlop::getN(void) {
+int FlipFlop::getN(void) const {
 	return N;
 }
 void FlipFlop::setPower(float power) {
