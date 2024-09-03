@@ -32,8 +32,6 @@ Legalization::Legalization(Board& board) {
 }
 Legalization::~Legalization() {}
 void Legalization::legalize(Board& board) {
-	clock_t start;
-	double elapsed;
 	//if (checkLegal(board)) {
 	//	cout << "The placement is legal." << endl;
 	//}
@@ -41,37 +39,18 @@ void Legalization::legalize(Board& board) {
 	//	cout << "The placement is illegal." << endl;
 	//}
 
-	start = clock();
 	initializeBins();
-	elapsed = double(clock() - start) / CLOCKS_PER_SEC;
-	//cout << "initializeBins" << elapsed << " s" << endl;
-
-	start = clock();
 	cellToBins(board);
-	elapsed = double(clock() - start) / CLOCKS_PER_SEC;
-	//cout << "cellToBins" << elapsed << " s" << endl;
-
-	start = clock();
 	findOverfilledBins();
-	elapsed = double(clock() - start) / CLOCKS_PER_SEC;
-	//cout << "findOverfilledBins" << elapsed << " s" << endl;
-
-	start = clock();
 	cellSpreading(board);
-	elapsed = double(clock() - start) / CLOCKS_PER_SEC;
-	//cout << "cellSpreading" << elapsed << " s" << endl;
-
-	start = clock();
 	parallelLegalization(board);
-	elapsed = double(clock() - start) / CLOCKS_PER_SEC;
-	//cout << "parallelLegalization" << elapsed << " s" << endl;
 
-	if (checkLegal(board)) {
-		cout << "The placement is legal." << endl;
-	}
-	else {
-		cout << "The placement is illegal." << endl;
-	}
+	//if (checkLegal(board)) {
+	//	cout << "The placement is legal." << endl;
+	//}
+	//else {
+	//	cout << "The placement is illegal." << endl;
+	//}
 }
 void Legalization::initializeBins() {
 	int numBinsHorizontal = (upperRightX - lowerLeftX) / BinWidth;
@@ -185,7 +164,7 @@ void Legalization::calculateDensity(Board& board) {
 void Legalization::findOverfilledBins() {
 	long double totalPlacementArea = (double)siteWidth * siteHeight * siteHorizontal * siteVertical;
 	double averageDensity = totalCellArea / totalPlacementArea;
-	cout << "averageDensity: " << averageDensity << endl;
+	//cout << "averageDensity: " << averageDensity << endl;
 	if (averageDensity >= 0.8 && averageDensity <= 0.9) {
 		if (BinMaxUtil > averageDensity + 0.05) {
 			BinMaxUtil = averageDensity + 0.05;
@@ -310,7 +289,7 @@ void Legalization::cellSpreading(Board& board) {
 		}
 
 		cs.MCMF();
-		cs.printFlows();
+		//cs.printFlows();
 		//boundry cell moving
 		for (int i = 0; i < overfilledBins.size(); i++) {
 			for (auto& it : targetBins[i]) {
@@ -390,7 +369,8 @@ void Legalization::parallelLegalization(Board& board) {
 	int middleSiteX = (middleBin.siteLLX - placementRowLLX) / siteWidth;
 	int middleSiteY = (middleBin.siteLLY - placementRowLLY) / siteHeight;
 	placeGates(board);
-	
+	//time_t start, end;
+	//start = time(NULL);
 	for(int i = 0; i < numBinsHorizontal / 2; i++) {
 		for (int j = 0; j < numBinsVertical / 2; j++) {
 			placeBins.at(0).push_back(bins.at(i).at(j));
@@ -421,7 +401,10 @@ void Legalization::parallelLegalization(Board& board) {
 	for (auto& t : threads) {
 		t.join();
 	}
+	//end = time(NULL);
+	//cout << end - start << " s" << endl;
 
+	//start = time(NULL);
 	vector<thread> threads2;
 	threads2.emplace_back(&Legalization::replaceFailedFFs, this, ref(board), ref(grids), ref(placeFailedFlipFlops.at(0)), maxReplaceNum, maxFailedHorizontalDisplacement, maxFailedVerticalDisplacement, 0, 0, middleSiteX, middleSiteY, false);
 	threads2.emplace_back(&Legalization::replaceFailedFFs, this, ref(board), ref(grids), ref(placeFailedFlipFlops.at(1)), maxReplaceNum, maxFailedHorizontalDisplacement, maxFailedVerticalDisplacement, 0, middleSiteY, middleSiteX, siteVertical, false);
@@ -431,7 +414,11 @@ void Legalization::parallelLegalization(Board& board) {
 	for (auto& t : threads2) {
 		t.join();
 	}
+	//end = time(NULL);
+	//cout << end - start << " s" << endl;
 
+
+	//start = time(NULL);
 	vector<int> totalFailedFlipFlops;
 	for (auto& it : placeFailedFlipFlops) {
 		for (auto& it2 : it) {
@@ -444,31 +431,15 @@ void Legalization::parallelLegalization(Board& board) {
 		maxReplaceNum = 4;
 		replaceFailedFFs(board, grids, totalFailedFlipFlops, maxReplaceNum, maxFailedHorizontalDisplacement, maxFailedVerticalDisplacement, 0, 0, siteHorizontal, siteVertical, false);
 	}
-	if (totalFailedFlipFlops.size() != 0) {
-		cout << "legalization failed" << endl;
-		for(auto& it : totalFailedFlipFlops) {
-			cout << it << " "<<board.InstToFlipFlop.at(it).getX() << " " << board.InstToFlipFlop.at(it).getY() << endl;
-		}
-	}
+	//end = time(NULL);
+	//cout << end - start << " s" << endl;
 
-	ofstream outFile;
-	outFile.open("failFF.m");
-	outFile << "axis equal;\n" << "hold on\n" << "grid on\n";
-	outFile << "rectangle('Position', [" << board.LowerLeftX << "," << board.LowerLeftY << "," << board.HigherRightX - board.LowerLeftX << "," << board.HigherRightY - board.LowerLeftY << "], 'EdgeColor', 'b'); \n";
-	for (auto& it : board.InstToFlipFlop) {
-		outFile << "rectangle('Position', [" << it.second.getX() << ", " << it.second.getY() << ", " << it.second.getWidth() << ", " << it.second.getHeight() << "], 'FaceColor', 'y');\n";
-	}
-
-	for (auto& it : board.InstToGate) {
-		outFile << "rectangle('Position', [" << it.second.getX() << ", " << it.second.getY() << ", " << it.second.getWidth() << ", " << it.second.getHeight() << "], 'FaceColor', 'r');\n";
-	}
-	for (auto& it : totalFailedFlipFlops) {
-		outFile << "rectangle('Position', [" << board.InstToFlipFlop.at(it).getX() << ", " << board.InstToFlipFlop.at(it).getY() << ", " << board.InstToFlipFlop.at(it).getWidth() << ", " << board.InstToFlipFlop.at(it).getHeight() << "], 'FaceColor', 'g');\n";
-	}
-	outFile.close();
-
-
-
+	//if (totalFailedFlipFlops.size() != 0) {
+	//	cout << "legalization failed" << endl;
+	//	for(auto& it : totalFailedFlipFlops) {
+	//		cout << it << " "<<board.InstToFlipFlop.at(it).getX() << " " << board.InstToFlipFlop.at(it).getY() << endl;
+	//	}
+	//}
 }
 void Legalization::placeGates(Board& board) {
 	//mark the site occupied by the gate as 1
@@ -838,11 +809,11 @@ void Legalization::replaceFailedFFs(Board& board, vector<vector<int>>& grids, ve
 		}
 	}
 	if (!placeFailedFlipFlops.empty()) {
-		cout << "Failed to replace the following flipflops: ";
-		for (auto& it : placeFailedFlipFlops) {
-			cout << it << ", ";
-		}
-		cout<< endl;
+		//cout << "Failed to replace the following flipflops: ";
+		//for (auto& it : placeFailedFlipFlops) {
+		//	cout << it << ", ";
+		//}
+		//cout<< endl;
 		maxFailedHorizontalDisplacement += 50;
 		maxFailedVerticalDisplacement += 20;
 		maxReplaceNum--;
