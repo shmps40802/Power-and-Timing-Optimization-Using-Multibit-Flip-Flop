@@ -18,7 +18,7 @@ public:
 	FlipFlop();
 	FlipFlop(int, int, int, int, vector<Point>);  // N width height P Pin
 	~FlipFlop();
-	int getN(void);                               // get bit number
+	int getN(void) const;                               // get bit number
 	void setPower(float);
 	float getPower(void);
 	void setQpinDelay(float);
