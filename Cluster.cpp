@@ -12,7 +12,7 @@ Cluster::Cluster() {
 	epochs = 5;
 	maxBits = 4;
 	Max = DBL_MAX;
-	p = 5;
+	p = 3;
 	q = 10;
 	// initializeVector(k, l);
 }
@@ -146,30 +146,30 @@ float Cluster::Silhouette(vector<FlipFlop> points, int TK) {
 }
 void Cluster::kmeans(Board& board) {
 	readData(board);
-	cout << "startkmean\n";
+	//cout << "startkmean\n";
 	for (size_t i = 0; i < DataPoints.size(); i++) {
 		kmean2t(board, DataPoints[i]);
 	}
-	cout << "start clustering\n";
+	//cout << "start clustering\n";
 	int t = 0;
 	int val = 0;
 	for (auto& it : KLClusters) {
 		int c = 0;
 		t++;
-		cout << t << "\n";
+		//cout << t << "\n";
 		for (auto& it2 : it) {
 			val += it.size();
 			if (it2.size() != 0) {
 				c++;
-				cout << c << "\n";
+				//cout << c << "\n";
 				findOptimalGrouping(it2, board);
-				cout << "Cost : " << board.Cost() << "\n";
+				//cout << "Cost : " << board.Cost() << "\n";
 			}
 		}
 
 	}
 }
-void Cluster::kmean2t(Board& board,vector<FlipFlop>datatmp) {
+void Cluster::kmean2t(Board& board, vector<FlipFlop>datatmp) {
 	vector<vector<FlipFlop>>tmp2;
 	size_t TK = 2;       //Silhouettescore
 	int rec = 1;
@@ -357,10 +357,10 @@ FlipFlop Cluster::updateFlipFlop(FlipFlop before, FlipFlop after, Board& board) 
 	//vectorBef.push_back(bef);
 	//vector<FlipFlop> aft;
 	//aft.push_back(after);
-	cout << "updateFlipFlop   " << before.getInstName() << "  " << before.getCellName() << " -> " << after.getCellName() << "  ";
+	//cout << "updateFlipFlop   " << before.getInstName() << "  " << before.getCellName() << " -> " << after.getCellName() << "  ";
 	//board.Banking(vectorBef, aft);
 	board.Banking(bef, after);
-	cout << "  " << after.getInstName() << endl;
+	//cout << "  " << after.getInstName() << endl;
 	return after;
 }
 void Cluster::updateBankedFlipFlop(vector<FlipFlop> before, FlipFlop after, Board& board) {
@@ -369,16 +369,16 @@ void Cluster::updateBankedFlipFlop(vector<FlipFlop> before, FlipFlop after, Boar
 	//vectorBef.push_back(before);
 	//vector<FlipFlop> aft;
 	//aft.push_back(after);
-	cout << "updateBankedFlipFlop   ";
-	for (auto it : before) {
-		cout << it.getInstName() << "  " << it.getCellName() << ", ";
-	}
-	cout << " -> " << after.getCellName() << "  ";
+	//cout << "updateBankedFlipFlop   ";
+	//for (auto it : before) {
+	//	cout << it.getInstName() << "  " << it.getCellName() << ", ";
+	//}
+	//cout << " -> " << after.getCellName() << "  ";
 	//board.Banking(vectorBef, aft);
 	board.Banking(before, after);
-	cout << "  " << after.getInstName() << endl;
+	//cout << "  " << after.getInstName() << endl;
 }
-bool Cluster::compareFlipFlop(FlipFlop& lhs, FlipFlop& rhs) {
+bool Cluster::compareFlipFlop(const FlipFlop& lhs, const FlipFlop& rhs) {
 	if (lhs.getN() == rhs.getN()) {
 		string lnum = "";
 		string rnum = "";
