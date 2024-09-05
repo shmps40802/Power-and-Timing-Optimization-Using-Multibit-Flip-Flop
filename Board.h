@@ -112,6 +112,6 @@ public:
 	void addNet2(string, string);
 	void removeNet2(string, string);
 	void setwl(unordered_map<string, pair<string, int>> DCON, unordered_map<string, unordered_map<string, int>> Qcon);
-	void bankall(void);
+	//void bankall(void);
 };
 #endif
