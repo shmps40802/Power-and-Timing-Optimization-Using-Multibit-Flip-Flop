@@ -442,7 +442,6 @@ void Board::Qslack(string PinName, float& NS, int x, int y, float dq) {
 		dWL = WL2 - WL1;
 		string in = Ddelay[it][PinName].second;
 		int WL3 = Qcon[PinName][in];
-		NS += (WL3 - WL2) * DisplacementDelay;
 		if (slack < 0.0) {
 			float newslack = slack - (dq + dWL * DisplacementDelay);
 			slack = slack < 0 ? slack : 0;
