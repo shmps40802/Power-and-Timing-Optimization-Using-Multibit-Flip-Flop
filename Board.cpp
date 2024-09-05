@@ -7,7 +7,7 @@
 #include <cassert>
 using namespace std;
 bool ffComp(pair<string, FlipFlop> p1, pair<string, FlipFlop> p2) {
-	return p1.second.FlipFlop::getN() > p2.second.FlipFlop::getN();
+	return p1.second.getN() > p2.second.getN();
 }
 bool fltComp(float f1, float f2) {
 	return f1 > f2;
@@ -74,14 +74,14 @@ Board::Board(string inputFile, string outputFile) {
 	ReadFile();
 	FlipFlop f;
 	for (auto& it : FlipFlopLib) {
-		if (it.second.FlipFlop::getN() == 1) {
+		if (it.second.getN() == 1) {
 			f = it.second;
 			break;
 		}
 	}
 	auto FFs = InstToFlipFlop;
 	for (auto& it : FFs) {
-		int N = it.second.FlipFlop::getN();
+		int N = it.second.getN();
 		f.setPos(it.second.getX(), it.second.getY());
 		if (N != 1) {
 			vector<FlipFlop> tmp(N, f);
@@ -96,7 +96,8 @@ Board::Board(string inputFile, string outputFile) {
 		}
 		if (!tmp.empty()) FlipFlopByClk.push_back(tmp);
 	}
-	//cout << "Clk : " << FlipFlopByClk.size() << " (s)\n";
+	Display();
+	cout << "Clk : " << FlipFlopByClk.size() << " (s)\n";
 }
 Board::~Board() {}
 void Board::ReadFile(void) {
@@ -186,7 +187,7 @@ void Board::ReadFile(void) {
 			for (auto& it : F.getPin()) {
 				string instname = InstName + "/" + it.name;
 				if (it.name == "CLK") {
-					for (int i = 0; i < F.FlipFlop::getN(); i++) {
+					for (int i = 0; i < F.getN(); i++) {
 						InstToFlipFlop[cnum].setsource(it.name, instname);
 					}
 				}
@@ -247,7 +248,7 @@ void Board::ReadFile(void) {
 	}
 	int sum = 0;
 	for (auto& it : InstToFlipFlop) {
-		sum += it.second.FlipFlop::getN();
+		sum += it.second.getN();
 	}
 	for (int i = 0; i < sum; i++) {
 		fin >> Str >> InstName >> name >> slack;
@@ -270,28 +271,54 @@ void Board::Display(void) {
 	ofstream fout;
 	fout.open("check.txt");
 	for (auto& it : InstToFlipFlop) {
-		fout << it.second.getInstName() << " " << it.second.getCellName() << " " << it.second.FlipFlop::getN() << "\n";
+		fout << it.second.getInstName() << " " << it.second.getCellName() << " " << it.second.getN() << "\n";	
 	}
 	fout.close();
 }
 void Board::outputFile(void) {
 	ofstream fout;
-	//fout.open("output.txt");
 	fout.open(outFile);
-	fout << "CellInst " << NewFlipFlop.size() << "\n";
+	/*fout << "CellInst " << NewFlipFlop.size() << "\n";
 	for (auto& it : NewFlipFlop) {
 		FlipFlop f = InstToFlipFlop[it];
 		fout << "Inst C" << it << " " << f.getCellName() << " " << f.getX() << " " << f.getY() << "\n";
-	}
+	}*/
+	fout << "CellInst " << InstToFlipFlop.size() << "\n";
+	vector<int> tmp;
 	for (auto& it : InstToFlipFlop) {
 		for (auto& it2 : it.second.getPin()) {
 			for (size_t i = 0; i < it2.sourcename.size(); i++) {
 				string ss = "C" + to_string(it.first) + "/" + it2.name;
-				if (it2.sourcename[i] != ss) {
-					fout << it2.sourcename[i] << " map " << ss << endl;
+				FlipFlop f = it.second;
+				if (it2.sourcename[i] == ss) {
+					fout << "Inst C" << CellNumber << " " << f.getCellName() << " " << f.getX() << " " << f.getY() << "\n";
+					tmp.push_back(CellNumber);
+					CellNumber++;
+				}
+				else {
+					fout << "Inst C" << it.first << " " << f.getCellName() << " " << f.getX() << " " << f.getY() << "\n";
+				}
+			}
+			break;
+		}
+	}
+	int index = 0;
+	for (auto& it : InstToFlipFlop) {
+		int t = 0;
+		for (auto& it2 : it.second.getPin()) {
+			for (size_t i = 0; i < it2.sourcename.size(); i++) {
+				string s1 = "C" + to_string(it.first) + "/" + it2.name;
+				string s2 = "C" + to_string(tmp[index]) + "/" + it2.name;
+				if (it2.sourcename[i] != s1) {
+					fout << it2.sourcename[i] << " map " << s1 << endl;
+				}
+				else {
+					fout << it2.sourcename[i] << " map " << s2 << endl;
+					t = 1;
 				}
 			}
 		}
+		if (t) index++;
 	}
 	fout.close();
 }
@@ -353,14 +380,10 @@ Point Board::NametoPoint(string& PinName) {
 	// input output pin
 	else {
 		for (auto& it : Input) {
-			if (it.name == PinName) {
-				return it;
-			}
+			if (it.name == PinName) return it;
 		}
 		for (auto& it : Output) {
-			if (it.name == PinName) {
-				return it;
-			}
+			if (it.name == PinName) return it;
 		}
 	}
 	cout << "Pin " << PinName << " can't be found\n";
@@ -368,12 +391,8 @@ Point Board::NametoPoint(string& PinName) {
 	return Point();
 }
 Cell Board::getCell(int cnum) {
-	if (InstToFlipFlop.find(cnum) != InstToFlipFlop.end()) {
-		return InstToFlipFlop[cnum];
-	}
-	else if (InstToGate.find(cnum) != InstToGate.end()) {
-		return InstToGate[cnum];
-	}
+	if (InstToFlipFlop.find(cnum) != InstToFlipFlop.end()) return InstToFlipFlop[cnum];
+	else if (InstToGate.find(cnum) != InstToGate.end()) return InstToGate[cnum];
 	else {
 		cout << "C" << cnum << " not find\n";
 		return Cell();
@@ -421,6 +440,9 @@ void Board::Qslack(string PinName, float& NS, int x, int y, float dq) {
 		int WL1 = dist(p1, p2);
 		int WL2 = abs(x - p2.x) + abs(y - p2.y);
 		dWL = WL2 - WL1;
+		string in = Ddelay[it][PinName].second;
+		int WL3 = Qcon[PinName][in];
+		NS += (WL3 - WL2) * DisplacementDelay;
 		if (slack < 0.0) {
 			float newslack = slack - (dq + dWL * DisplacementDelay);
 			slack = slack < 0 ? slack : 0;
@@ -525,7 +547,7 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 					d++;
 				}
 				string D = "D" + to_string(dd + w);
-				if (InstToFlipFlop[CellNumber].FlipFlop::getN() == 1) {
+				if (InstToFlipFlop[CellNumber].getN() == 1) {
 					D = "D";
 				}
 				InstToFlipFlop[CellNumber].setsource(D, p.sourcename[0]);
@@ -558,11 +580,11 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 							t = tt;
 							break;
 						}
-						tt += F1[i].FlipFlop::getN();
+						tt += F1[i].getN();
 					}
 					if (t != -1) {
 						string tmp2 = nshift(it.first.substr(pos2 + 1, end), t);
-						if (F2.FlipFlop::getN() == 1) tmp2 = "Q";
+						if (F2.getN() == 1) tmp2 = "Q";
 						qname = FlipFlopName + "/" + tmp2;
 					}
 					else {
@@ -581,7 +603,7 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 					q++;
 				}
 				string Q = "Q" + to_string(qq + w);
-				if (InstToFlipFlop[CellNumber].FlipFlop::getN() == 1) {
+				if (InstToFlipFlop[CellNumber].getN() == 1) {
 					Q = "Q";
 				}
 				InstToFlipFlop[CellNumber].setsource(Q, p.sourcename[0]);
@@ -606,11 +628,11 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 							t = tt;
 							break;
 						}
-						tt += F1[i].FlipFlop::getN();
+						tt += F1[i].getN();
 					}
 					if (t != -1) {
 						string tmp2 = nshift(it.substr(pos2 + 1, end), t);
-						if (F2.FlipFlop::getN() == 1) tmp2 = "D";
+						if (F2.getN() == 1) tmp2 = "D";
 						dname = FlipFlopName + "/" + tmp2;
 					}
 					else {
@@ -663,7 +685,7 @@ void Board::Banking(vector<FlipFlop> F1, FlipFlop& F2) {
 			}
 		}
 		InstToFlipFlop.erase(f.getInstNum());
-		w += f.FlipFlop::getN();
+		w += f.getN();
 	}
 	F2 = InstToFlipFlop[CellNumber];
 	CellNumber++;
@@ -702,7 +724,7 @@ void Board::Debanking(FlipFlop F1, vector<FlipFlop>& F2) {
 					d++;
 				}
 				string D = "D" + to_string(dd);
-				if (f.FlipFlop::getN() == 1) {
+				if (f.getN() == 1) {
 					D = "D";
 				}
 				InstToFlipFlop[instnum].setsource(D, prevPin[d].sourcename[0]);
@@ -757,7 +779,7 @@ void Board::Debanking(FlipFlop F1, vector<FlipFlop>& F2) {
 					q++;
 				}
 				string Q = "Q" + to_string(qq);
-				if (f.FlipFlop::getN() == 1) {
+				if (f.getN() == 1) {
 					Q = "Q";
 				}
 				InstToFlipFlop[instnum].setsource(Q, prevPin[q].sourcename[0]);
@@ -808,7 +830,7 @@ void Board::Debanking(FlipFlop F1, vector<FlipFlop>& F2) {
 				while (prevPin[c].type != 'C') {
 					c++;
 				}
-				for (int ij = w; ij < f.FlipFlop::getN() + w; ij++) {
+				for (int ij = w; ij < f.getN() + w; ij++) {
 					InstToFlipFlop[instnum].setsource("CLK", prevPin[c].sourcename[ij]);
 				}
 				prev = prevcell + "/" + prevPin[c].name;
@@ -825,7 +847,7 @@ void Board::Debanking(FlipFlop F1, vector<FlipFlop>& F2) {
 			}
 		}
 		// add cell to location
-		w += f.FlipFlop::getN();
+		w += f.getN();
 	}
 	string prev = prevcell + "/" + prevPin[c].name;
 	int netnum = PointToNet[prev];
@@ -844,7 +866,7 @@ void Board::Debanking(FlipFlop F1, vector<FlipFlop>& F2) {
 	InstToFlipFlop.erase(F1.getInstNum());
 }
 float Board::bankingCompare(vector<FlipFlop>& prev, FlipFlop& cur) {
-	int N = cur.FlipFlop::getN();
+	int N = cur.getN();
 	float sum = 0;
 	float PowerComp = cur.getPower();
 	float AreaComp = (float)cur.getArea();
@@ -889,7 +911,7 @@ float Board::bankingCompare(vector<FlipFlop>& prev, FlipFlop& cur) {
 	return sum;
 }
 float Board::singleCompare(FlipFlop& prev, FlipFlop& cur) {
-	int N = cur.FlipFlop::getN();
+	int N = cur.getN();
 	float sum = 0;
 	float PowerComp = cur.getPower();
 	float AreaComp = (float)cur.getArea();
@@ -1023,7 +1045,7 @@ float Board::TNSCost() {
 		for (auto& p : it.second.getPin()) {
 			if (p.type != 'D')continue;
 			float negslack = it.second.getSlack()[p.name];
-			if (negslack < 0)sum -= negslack;
+			if (negslack < 0) sum -= negslack;
 		}
 	}
 	return sum;
@@ -1139,7 +1161,8 @@ void Board::setwl(unordered_map<string, pair<string, int>> DCON, unordered_map<s
 	this->Dcon = DCON;
 	this->Qcon = Qcon;
 }
-void Board::bankall(void) {
+/*void Board::bankall(void) {
+	auto tmp = InstToFlipFlop;
 	for (auto& it : InstToFlipFlop) {
 		vector<Point> pins = it.second.getPin();
 		if (pins[0].sourcename[0] != it.second.getInstName() + "/" + pins[0].name) continue;
@@ -1148,4 +1171,4 @@ void Board::bankall(void) {
 		tmp.setPos(it.second.getX(), it.second.getY());
 		Banking(vector<FlipFlop>{it.second}, tmp);
 	}
-}
+}*/
