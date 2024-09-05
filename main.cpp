@@ -35,7 +35,6 @@ int main(int argc, char* argv[]) {
 	END = clock();
 	cout << "legalize: " << (END - START2) / CLOCKS_PER_SEC << "s" << endl;
 
-	B.bankall();
 	B.outputFile();
 	END = clock();
 	cout << "total time: " << (END - START) / CLOCKS_PER_SEC << "s" << endl;
