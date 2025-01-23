@@ -76,8 +76,8 @@ void Graph::addEdge(int from, int to, int weight) {
 	if (nodes[from].name.find("INPUT") != string::npos || nodes[from].name.find("Q") != string::npos) {
 		adjList[to].push_back({ to, from, weight, 1 });
 	}
-	else{adjList[to].push_back({ to, from, weight, 0 });}
-	
+	else { adjList[to].push_back({ to, from, weight, 0 }); }
+
 }
 void Graph::removeEdge(int from, int to) {
 	if (adjList.find(from) != adjList.end()) {
@@ -116,11 +116,11 @@ void Graph::setWL(Board& B) {
 				tt = s.second.second.first - QWL[s.first] + slack[p.name] / B.DisplacementDelay;
 				int wl = 0;
 				for (auto& it : adjList[index]) {
-					if (it.to == s.second.first) {	
+					if (it.to == s.second.first) {
 						wl = it.weight + slack[p.name] / B.DisplacementDelay;
 					}
 				}
-				vector<int> tmp0({s.second.first, wl, s.second.second.second, tt });
+				vector<int> tmp0({ s.second.first, wl, s.second.second.second, tt });
 				SS[s.first] = tmp0;
 				//fout << nodes[s.first].name<<" "<< nodes[s.second.first].name << " " << nodes[s.second.second.second].name << " "
 				//<< nodes[index].name << " " << s.second.second.first << " "<< tt  <<"\n";
@@ -154,7 +154,7 @@ void Graph::setWL(Board& B) {
 	B.setwl(DCON, Qcon);
 	//fout.close();
 }
-void Graph::dfs(int index, int WL, unordered_map<int, pair<int, pair<int, int>>>& S, int tmp, unordered_map<int, int>& QWL, int& maxwl, unordered_map<int, int>&pinwl) {
+void Graph::dfs(int index, int WL, unordered_map<int, pair<int, pair<int, int>>>& S, int tmp, unordered_map<int, int>& QWL, int& maxwl, unordered_map<int, int>& pinwl) {
 	unordered_map<int, int> dist;
 	for (auto& it : adjList[index]) {
 		if (tmp == -1) {
@@ -175,7 +175,7 @@ void Graph::dfs(int index, int WL, unordered_map<int, pair<int, pair<int, int>>>
 			if (pinwl.find(it.to) == pinwl.end() || pinwl[it.to] < it.weight + pinwl[it.from]) {
 				pinwl[it.to] = it.weight + pinwl[it.from];
 				dfs(it.to, WL + it.weight, S, tmp, QWL, maxwl, pinwl);
-		    }
+			}
 		}
 	}
 }

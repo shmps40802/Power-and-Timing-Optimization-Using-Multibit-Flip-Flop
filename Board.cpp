@@ -271,7 +271,7 @@ void Board::Display(void) {
 	ofstream fout;
 	fout.open("check.txt");
 	for (auto& it : InstToFlipFlop) {
-		fout << it.second.getInstName() << " " << it.second.getCellName() << " " << it.second.FlipFlop::getN() << "\n";	
+		fout << it.second.getInstName() << " " << it.second.getCellName() << " " << it.second.FlipFlop::getN() << "\n";
 	}
 	fout.close();
 }
@@ -330,7 +330,7 @@ void Board::Plot() {
 	for (auto& it : InstToFlipFlop) {
 		outFile << "rectangle('Position', [" << it.second.getX() << ", " << it.second.getY() << ", " << it.second.getWidth() << ", " << it.second.getHeight() << "], 'FaceColor', 'y', 'EdgeColor', 'none');\n";
 	}
-	
+
 	for (auto& it : InstToGate) {
 		outFile << "rectangle('Position', [" << it.second.getX() << ", " << it.second.getY() << ", " << it.second.getWidth() << ", " << it.second.getHeight() << "], 'FaceColor', 'b', 'EdgeColor', 'none');\n";
 	}
@@ -1072,15 +1072,13 @@ float Board::BinCost() {
 		int ft = it.second.getTop();
 		for (int i = fx / BinWidth * BinWidth; i < fr; i += BinWidth) {
 			int w = 0;
-			if (i + BinWidth >= fr && i <= fx) w = fr - fx;
-			else if (i + BinWidth > fr && i > fx)w = fr - i;
-			else if (i < fx && i + BinWidth < fr)w = i - fx + BinWidth;
+			if (i + BinWidth > fr && i >= fx)w = fr - i;
+			else if (i < fx && i + BinWidth <= fr)w = i - fx + BinWidth;
 			else w = BinWidth;
 			for (int j = fy / BinHeight * BinHeight; j < ft; j += BinHeight) {
 				int h = 0;
-				if (j <= fy && j + BinWidth >= ft) h = ft - fy;
-				else if (j + BinHeight > ft && j > fy)h = ft - j;
-				else if (j < fy && j + BinHeight < ft)h = j - fy + BinHeight;
+				if (j + BinHeight > ft && j >= fy)h = ft - j;
+				else if (j < fy && j + BinHeight <= ft)h = j - fy + BinHeight;
 				else h = BinHeight;
 				BinDensity[i][j] += (float)w * h;
 			}
@@ -1093,15 +1091,13 @@ float Board::BinCost() {
 		int gt = it.second.getTop();
 		for (int i = gx / BinWidth * BinWidth; i < gr; i += BinWidth) {
 			int w = 0;
-			if (i <= gx && i + BinWidth >= gr)w = gr - gx;
-			else if (i + BinWidth > gr && i > gx)w = gr - i;
-			else if (i < gx && i + BinWidth < gr)w = i - gx + BinWidth;
+			if (i + BinWidth > gr && i >= gx)w = gr - i;
+			else if (i < gx && i + BinWidth <= gr)w = i - gx + BinWidth;
 			else w = BinWidth;
 			for (int j = gy / BinHeight * BinHeight; j < gt; j += BinHeight) {
 				int h = 0;
-				if (j <= gy && j + BinWidth >= gt)h = gt - gy;
-				else if (j + BinHeight > gt && j > gy)h = gt - j;
-				else if (j < gy && j + BinHeight < gt)h = j - gy + BinHeight;
+				if (j + BinHeight > gt && j >= gy)h = gt - j;
+				else if (j < gy && j + BinHeight <= gt)h = j - gy + BinHeight;
 				else h = BinHeight;
 				BinDensity[i][j] += (float)w * h;
 			}
@@ -1109,7 +1105,7 @@ float Board::BinCost() {
 	}
 	for (auto& it : BinDensity) {
 		for (auto& d : it.second) {
-			d.second /= (float) (BinWidth * BinHeight / 100);
+			d.second /= (float)(BinWidth * BinHeight / 100);
 			if (d.second >= BinMaxUtil) sum += 1;
 		}
 	}

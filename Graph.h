@@ -36,7 +36,7 @@ public:
 	void addEdge(int, int, int);
 	void removeEdge(int, int);
 	void setWL(Board&);
-	void dfs(int index, int WL, unordered_map<int, pair<int, pair<int, int>>>& S, int tmp, unordered_map<int, int>&QWL, int &maxwl, unordered_map<int, int>&pinwl);//Q dcon WL Qcon
+	void dfs(int index, int WL, unordered_map<int, pair<int, pair<int, int>>>& S, int tmp, unordered_map<int, int>& QWL, int& maxwl, unordered_map<int, int>& pinwl);//Q dcon WL Qcon
 };
 
 #endif

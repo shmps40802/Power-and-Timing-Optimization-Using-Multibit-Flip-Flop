@@ -13,7 +13,7 @@ CellSpreading::CellSpreading(int nodeNum, int source, int target) : MAXN(nodeNum
 CellSpreading::~CellSpreading() {}
 void CellSpreading::MCMF() {
 	while (Dijkstra()); //while there is an augmenting path from source to target
-    cout << "maxFlow: " << maxFlow << " minCost: " << minCost << endl;
+    //cout << "maxFlow: " << maxFlow << " minCost: " << minCost << endl;
 }
 bool CellSpreading::Dijkstra() {
     cost.assign(MAXN, INT_MAX);

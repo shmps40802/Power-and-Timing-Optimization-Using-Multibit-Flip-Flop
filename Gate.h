@@ -4,7 +4,7 @@
 #include <string>
 #include "Cell.h"
 using namespace std;
-class Gate : public Cell{
+class Gate : public Cell {
 private:
     string Name;
 public:

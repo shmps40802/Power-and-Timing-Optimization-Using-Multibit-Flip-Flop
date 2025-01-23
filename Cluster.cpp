@@ -13,7 +13,7 @@ Cluster::Cluster() {
 	maxBits = 4;
 	Max = DBL_MAX;
 	p = 3;
-	q = 10;
+	q = 5;
 	// initializeVector(k, l);
 }
 

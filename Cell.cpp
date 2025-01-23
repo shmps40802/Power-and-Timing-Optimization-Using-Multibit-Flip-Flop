@@ -76,12 +76,12 @@ void Cell::setsource(string pinname, string source) {
 }
 vector<string> Cell::getsource(string pinname) {
     vector<string> result;
-	for (auto& it : Pin) {
-		if (it.name == pinname) {
-			result = it.sourcename;
-		}
-	}
-	if (Pin.empty()) cout << "Pin is empty\n";
-	else if (result.empty())cout << "Pin " << pinname << " don't have sourcename\n";
-	return result;
+    for (auto& it : Pin) {
+        if (it.name == pinname) {
+            result = it.sourcename;
+        }
+    }
+    if (Pin.empty()) cout << "Pin is empty\n";
+    else if (result.empty())cout << "Pin " << pinname << " don't have sourcename\n";
+    return result;
 }
